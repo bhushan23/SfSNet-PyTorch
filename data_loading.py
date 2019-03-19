@@ -20,23 +20,40 @@ def get_dataset(dir, validation_split=0):
     face    = []
     depth   = []
 
-    for img in sorted(glob.glob(dir + '*/*_albedo_*'), key=os.path.getmtime):
+    for img in sorted(glob.glob(dir + '*/*_albedo_*')):
         albedo.append(img)
 
-    for img in sorted(glob.glob(dir + '*/*_face_*'), key=os.path.getmtime):
+    for img in sorted(glob.glob(dir + '*/*_face_*')):
         face.append(img)    
 
-    for img in sorted(glob.glob(dir + '*/*_normal_*'), key=os.path.getmtime):
+    for img in sorted(glob.glob(dir + '*/*_normal_*')):
         normal.append(img)
 
-    for img in sorted(glob.glob(dir + '*/*_depth_*'), key=os.path.getmtime):
+    for img in sorted(glob.glob(dir + '*/*_depth_*')):
         depth.append(img)
 
-    for img in sorted(glob.glob(dir + '*/*_mask_*'), key=os.path.getmtime):
+    for img in sorted(glob.glob(dir + '*/*_mask_*')):
         mask.append(img)
 
-    for img in sorted(glob.glob(dir + '*/*_light_*.txt'), key=os.path.getmtime):
+    for img in sorted(glob.glob(dir + '*/*_light_*.txt')):
         sh.append(img)
+
+    # Debugging print out images considered
+    # with open('albedo.txt', 'w') as f:
+    #     for item in albedo:
+    #         f.write("%s\n" % item)    
+
+    # with open('face.txt', 'w') as f:
+    #     for item in face:
+    #         f.write("%s\n" % item)    
+
+    # with open('normal.txt', 'w') as f:
+    #     for item in normal:
+    #         f.write("%s\n" % item)    
+
+    # with open('mask.txt', 'w') as f:
+    #     for item in mask:
+    #         f.write("%s\n" % item)    
 
     assert(len(albedo) == len(face) == len(normal) == len(depth) == len(mask) == len(sh))
     dataset_size = len(albedo)
@@ -64,13 +81,17 @@ class SfSNetDataset(Dataset):
         self.sh     = sh
         self.transform = transform
         self.dataset_len = len(self.albedo)
+        self.mask_transform = transforms.Compose([
+                              transforms.Resize(64),
+                              transforms.ToTensor(),
+                            ])
 
     def __getitem__(self, index):
         print(self.albedo[index])
         albedo = self.transform(Image.open(self.albedo[index]))
         face   = self.transform(Image.open(self.face[index]))
         normal = self.transform(Image.open(self.normal[index]))
-        mask   = self.transform(Image.open(self.mask[index]))
+        mask   = self.mask_transform(Image.open(self.mask[index]))
         pd_sh  = pd.read_csv(self.sh[index], sep='\t', header = None)
         sh     = torch.tensor(pd_sh.values)
 
