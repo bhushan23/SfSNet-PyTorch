@@ -6,8 +6,10 @@ def denorm(x):
     out = (x + 1) / 2
     return out.clamp(0, 1)
 
-def save_image(pic, path=None, mask=None):
-    pic = denorm(pic)
+def save_image(pic, denormalize=True, path=None, mask=None):
+    if denormalize:
+        pic = denorm(pic)
+    
     if mask is not None:
         pic = pic * mask
 
