@@ -69,7 +69,9 @@ def get_dataset(dir, validation_split=0):
     
     full_dataset = SfSNetDataset(albedo, face, normal, mask, sh, transform)  
 
-    train_dataset, val_dataset = random_split(full_dataset, [train_count, validation_count])
+    train_dataset = full_dataset
+    val_dataset = full_dataset
+    # train_dataset, val_dataset = random_split(full_dataset, [train_count, validation_count])
     return train_dataset, val_dataset
 
 class SfSNetDataset(Dataset):
@@ -87,7 +89,6 @@ class SfSNetDataset(Dataset):
                             ])
 
     def __getitem__(self, index):
-        print(self.albedo[index])
         albedo = self.transform(Image.open(self.albedo[index]))
         face   = self.transform(Image.open(self.face[index]))
         normal = self.transform(Image.open(self.normal[index]))

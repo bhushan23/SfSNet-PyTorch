@@ -7,7 +7,6 @@ from torch.autograd import Variable
 from utils import *
 from models import sfsNetShading
 
-
 # def var(x):
 #     if torch.cuda.is_available():
 #         x = x.cuda()
@@ -42,7 +41,6 @@ class waspShadeRenderer(nn.Module):
         hN_vec_Right = hN_vec.unsqueeze(2)
         # expand the lighting from batchSize x 4 x 4 to N x 4 x 4
         hL = mLight.view(batchSize,16).repeat(1,W*H).view(-1,4,4).type(torch.float)
-        print(hL.type(), hN_vec_Left.type())
         shade0 = torch.matmul(hN_vec_Left, hL)
         shade1 = torch.matmul(shade0, hN_vec_Right)
         #shade1 is tensor of size Nx1x1 = batchSize x W x H
@@ -55,7 +53,6 @@ class HomogeneousCoord(nn.Module):
         super(HomogeneousCoord, self).__init__()
         self.opt = opt
     def forward(self, x):
-        print(x.shape)
         y = torch.ones(x.size(0),1,x.size(2),x.size(3))
         z = torch.cat((x,y),1)
         return z
@@ -69,7 +66,6 @@ class MMatrix(nn.Module):
     def forward(self, L):
         # input L:[batchSize,9]
         # output M: [batchSize, 4, 4]
-        print(L.shape, L[:,8])
         c1 = 0.429043
         c2 = 0.511664
         c3 = 0.743152

@@ -33,15 +33,11 @@ class sfsNetShading(nn.Module):
         L = L.type(torch.float)
         sh = torch.split(L, 9, dim=1)
 
-        print(c, len(sh))
         assert(c == len(sh))
-
-        print(Y1.shape, Y2.shape, Y3.shape, Y4.shape, Y5.shape, Y6.shape, Y7.shape, Y8.shape, Y9.shape)
         shading = torch.zeros(b, c, h, w)
         for j in range(c):
             l = sh[j]
-            print(l.shape, l[:, 0])
-            shading[:, j, :, :] += Y1 * l[:, 0] + Y2 * l[:, 1] + Y3 * l[:, 2] + \
+            shading[:, j, :, :] = Y1 * l[:, 0] + Y2 * l[:, 1] + Y3 * l[:, 2] + \
                                   Y4 * l[:, 3] + Y5 * l[:, 4] + Y6 * l[:, 5] + \
                                   Y7 * l[:, 6] + Y8 * l[:, 7] + Y9 * l[:, 8]
 
