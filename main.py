@@ -34,11 +34,11 @@ albedo, normal, mask, sh, face = next(iter(train_dl))
 # save_image(masked_image)
 
 shading = getShadingFromNormalAndSH(normal, sh)
-save_image(shading, mask=mask)
+save_image(shading, mask=mask, path='./results/shading_from_normal/shading_ours.png')
 
 recon   = shading * albedo
-save_image(recon, mask=mask)
-save_image(face, mask=mask)
+save_image(recon, mask=mask, path='./results/shading_from_normal/recon_ours.png')
+save_image(face, mask=mask, path = './results/shading_from_normal/recon_groundtruth.png')
 
 recon = applyMask(recon, mask)
 face  = applyMask(face, mask)
@@ -48,9 +48,9 @@ print('L1Loss Ours: ', mseLoss(face, recon).item())
 sfsnet_shading_net = sfsNetShading()
 sh = sh.view(sh.shape[0], sh.shape[2])
 sfs_shading = sfsnet_shading_net(normal, sh)
-save_image(sfs_shading, mask=mask)
+save_image(sfs_shading, mask=mask, path='./results/shading_from_normal/shading_sfsnet.png')
 recon   = sfs_shading * albedo
-save_image(recon, mask=mask)
+save_image(recon, mask=mask, path='./results/shading_from_normal/recon_sfsnet.png')
 
 recon = applyMask(recon, mask)
 face  = applyMask(face, mask)

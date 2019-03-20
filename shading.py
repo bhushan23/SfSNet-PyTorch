@@ -142,7 +142,7 @@ class sfsNetShading(nn.Module):
         
         b, c, h, w = N.shape
         
-        Y1 = c1 *  torch.ones(b, h, w)
+        Y1 = c1 * torch.ones(b, h, w)
         Y2 = c2 * nz
         Y3 = c2 * nx
         Y4 = c2 * ny
@@ -163,7 +163,7 @@ class sfsNetShading(nn.Module):
         for j in range(c):
             l = sh[j]
             print(l.shape, l[:, 0])
-            shading[:, j, :, :] = Y1 * l[:, 0] + Y2 * l[:, 1] + Y3 * l[:, 2] + \
+            shading[:, j, :, :] += Y1 * l[:, 0] + Y2 * l[:, 1] + Y3 * l[:, 2] + \
                                   Y4 * l[:, 3] + Y5 * l[:, 4] + Y6 * l[:, 5] + \
                                   Y7 * l[:, 6] + Y8 * l[:, 7] + Y9 * l[:, 8]
 
