@@ -62,7 +62,7 @@ def get_dataset(dir, validation_split=0):
 
     # Build custom datasets
     transform = transforms.Compose([
-                transforms.Resize(64),
+                # transforms.Resize(64),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
             ])
@@ -82,7 +82,7 @@ class SfSNetDataset(Dataset):
         self.transform = transform
         self.dataset_len = len(self.albedo)
         self.mask_transform = transforms.Compose([
-                              transforms.Resize(64),
+                              # transforms.Resize(64),
                               transforms.ToTensor(),
                             ])
 

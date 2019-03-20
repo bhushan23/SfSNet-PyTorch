@@ -3,6 +3,7 @@ import torchvision
 from torchvision import transforms
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
+import torch.nn as nn
 
 from data_loading import *
 from utils import *
@@ -19,13 +20,12 @@ if torch.cuda.is_available():
 # data processing
 train_dataset, val_dataset = get_dataset(train_data, 10)
 
-train_dl = DataLoader(train_dataset, batch_size = 2, shuffle=True)
+train_dl = DataLoader(train_dataset, batch_size = 1, shuffle=True)
 val_dl   = DataLoader(val_dataset, batch_size = 5)
 print('Train data: ', len(train_dl), ' Val data: ', len(val_dl))
 
 # Debugging show few images
 albedo, normal, mask, sh, face = next(iter(train_dl))
-print(albedo.shape)
 # save_image(albedo)
 # save_image(normal)
 # save_image(face)
@@ -35,5 +35,24 @@ print(albedo.shape)
 
 shading = getShadingFromNormalAndSH(normal, sh)
 save_image(shading, mask=mask)
-print(shading.shape)
 
+recon   = shading * albedo
+save_image(recon, mask=mask)
+save_image(face, mask=mask)
+
+recon = applyMask(recon, mask)
+face  = applyMask(face, mask)
+mseLoss = nn.L1Loss()
+print('L1Loss Ours: ', mseLoss(face, recon).item())
+
+sfsnet_shading_net = sfsNetShading()
+sh = sh.view(sh.shape[0], sh.shape[2])
+sfs_shading = sfsnet_shading_net(normal, sh)
+save_image(sfs_shading, mask=mask)
+recon   = sfs_shading * albedo
+save_image(recon, mask=mask)
+
+recon = applyMask(recon, mask)
+face  = applyMask(face, mask)
+mseLoss = nn.L1Loss()
+print('L1Loss SFSNet: ', mseLoss(face, recon).item())
