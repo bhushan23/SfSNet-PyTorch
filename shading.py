@@ -5,6 +5,8 @@ import torch.nn as nn
 from torch.autograd import Variable
 
 from utils import *
+from models import sfsNetShading
+
 
 # def var(x):
 #     if torch.cuda.is_available():
@@ -14,6 +16,8 @@ from utils import *
 def applyMask(input_img, mask):
     return input_img * mask
 
+# Start of log based shading generation method
+# Credits: Zhixin Shu for providing following method
 class waspShadeRenderer(nn.Module):
     def __init__(self, opt):
         super(waspShadeRenderer, self).__init__()
@@ -94,22 +98,7 @@ class MMatrix(nn.Module):
         M = torch.cat((M0,M1,M2,M3),dim=1)
         return M
 
-# # Shading from Normals and SH
-# def ShadingFromDataLoading(rNormal, SH, shadingFromNet = False):
-#     if shadingFromNet:
-#         normal = rNormal.type(torch.DoubleTensor)
-#     else:        
-#         normal = next(iter(rNormal))
-#         normal = denorm(normal)
-#         normal = var(normal).type(torch.DoubleTensor)
-    
-#     if shadingFromNet:
-#         rSH = SH.type(torch.DoubleTensor)
-#     else:
-#         rSH = next(iter(SH))
-#         rSH = var(rSH).type(torch.DoubleTensor)
-#     #print('NORMAL and SH', normal.size(), rSH.size())
-#     return getShadingFromNormalAndSH(normal, rSH)
+# End of log based shading generation method
 
 def getShadingFromNormalAndSH(Normal, rSH):
     shader = waspShadeRenderer(None)
@@ -123,49 +112,33 @@ def getShadingFromNormalAndSH(Normal, rSH):
     return outShadingB
 
 
-class sfsNetShading(nn.Module):
-    def __init__(self):
-        super(sfsNetShading, self).__init__()
-    
-    def forward(self, N, L):
-        # Following values are computed from equation
-        # from SFSNet
-        c1 = 0.8862269254527579
-        c2 = 1.0233267079464883
-        c3 = 0.24770795610037571
-        c4 = 0.8580855308097834
-        c5 = 0.4290427654048917
+def validate_shading_method(train_dl):
+    albedo, normal, mask, sh, face = next(iter(train_dl))
 
-        nx = N[:, 0, :, :]
-        ny = N[:, 1, :, :]
-        nz = N[:, 2, :, :]
-        
-        b, c, h, w = N.shape
-        
-        Y1 = c1 * torch.ones(b, h, w)
-        Y2 = c2 * nz
-        Y3 = c2 * nx
-        Y4 = c2 * ny
-        Y5 = c3 * (2 * nz * nz - nx * nx - ny * ny)
-        Y6 = c4 * nx * nz
-        Y7 = c4 * ny * nz
-        Y8 = c5 * (nx * nx - ny * ny)
-        Y9 = c4 * nx * ny
+    normal = denorm(normal)
+    albedo = denorm(albedo)
+    shading = getShadingFromNormalAndSH(normal, sh)
+    save_image(albedo,  denormalize=False,mask=mask, path='./results/shading_from_normal/albedo.png')
+    save_image(normal,  denormalize=False,mask=mask, path='./results/shading_from_normal/normal.png')
+    save_image(shading, denormalize=False, mask=mask, path='./results/shading_from_normal/shading_ours.png')
 
-        L = L.type(torch.float)
-        sh = torch.split(L, 9, dim=1)
+    recon   = shading * albedo
+    save_image(recon, mask=mask, denormalize=False, path='./results/shading_from_normal/recon_ours.png')
+    save_image(face, mask=mask, path = './results/shading_from_normal/recon_groundtruth.png')
 
-        print(c, len(sh))
-        assert(c == len(sh))
+    recon = applyMask(recon, mask)
+    face  = applyMask(face, mask)
+    mseLoss = nn.L1Loss()
+    print('L1Loss Ours: ', mseLoss(face, recon).item())
 
-        print(Y1.shape, Y2.shape, Y3.shape, Y4.shape, Y5.shape, Y6.shape, Y7.shape, Y8.shape, Y9.shape)
-        shading = torch.zeros(b, c, h, w)
-        for j in range(c):
-            l = sh[j]
-            print(l.shape, l[:, 0])
-            shading[:, j, :, :] += Y1 * l[:, 0] + Y2 * l[:, 1] + Y3 * l[:, 2] + \
-                                  Y4 * l[:, 3] + Y5 * l[:, 4] + Y6 * l[:, 5] + \
-                                  Y7 * l[:, 6] + Y8 * l[:, 7] + Y9 * l[:, 8]
+    sfsnet_shading_net = sfsNetShading()
+    sh = sh.view(sh.shape[0], sh.shape[2])
+    sfs_shading = sfsnet_shading_net(normal, sh)
+    save_image(sfs_shading, mask=mask, denormalize=False, path='./results/shading_from_normal/shading_sfsnet.png')
+    recon   = sfs_shading * albedo
+    save_image(recon, mask=mask, denormalize=False, path='./results/shading_from_normal/recon_sfsnet.png')
 
-        return shading
-
+    recon = applyMask(recon, mask)
+    face  = applyMask(face, mask)
+    mseLoss = nn.L1Loss()
+    print('L1Loss SFSNet: ', mseLoss(face, recon).item())

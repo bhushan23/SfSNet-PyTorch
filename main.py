@@ -24,39 +24,6 @@ train_dl = DataLoader(train_dataset, batch_size = 1, shuffle=True)
 val_dl   = DataLoader(val_dataset, batch_size = 5)
 print('Train data: ', len(train_dl), ' Val data: ', len(val_dl))
 
-# Debugging show few images
-albedo, normal, mask, sh, face = next(iter(train_dl))
-# save_image(albedo)
-# save_image(normal)
-# save_image(face)
-# save_image(mask)
-# masked_image = applyMask(face, mask)
-# save_image(masked_image)
+# Debugging and check working
+validate_shading_method(train_dl)
 
-normal = denorm(normal)
-albedo = denorm(albedo)
-shading = getShadingFromNormalAndSH(normal, sh)
-save_image(albedo,  denormalize=False,mask=mask, path='./results/shading_from_normal/albedo.png')
-save_image(normal,  denormalize=False,mask=mask, path='./results/shading_from_normal/normal.png')
-save_image(shading, denormalize=False, mask=mask, path='./results/shading_from_normal/shading_ours.png')
-
-recon   = shading * albedo
-save_image(recon, mask=mask, denormalize=False, path='./results/shading_from_normal/recon_ours.png')
-save_image(face, mask=mask, path = './results/shading_from_normal/recon_groundtruth.png')
-
-recon = applyMask(recon, mask)
-face  = applyMask(face, mask)
-mseLoss = nn.L1Loss()
-print('L1Loss Ours: ', mseLoss(face, recon).item())
-
-sfsnet_shading_net = sfsNetShading()
-sh = sh.view(sh.shape[0], sh.shape[2])
-sfs_shading = sfsnet_shading_net(normal, sh)
-save_image(sfs_shading, mask=mask, denormalize=False, path='./results/shading_from_normal/shading_sfsnet.png')
-recon   = sfs_shading * albedo
-save_image(recon, mask=mask, denormalize=False, path='./results/shading_from_normal/recon_sfsnet.png')
-
-recon = applyMask(recon, mask)
-face  = applyMask(face, mask)
-mseLoss = nn.L1Loss()
-print('L1Loss SFSNet: ', mseLoss(face, recon).item())
