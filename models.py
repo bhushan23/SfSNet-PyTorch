@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.functional as F
 
 class sfsNetShading(nn.Module):
     def __init__(self):
@@ -43,3 +44,139 @@ class sfsNetShading(nn.Module):
 
         return shading
 
+
+# Base methods for creating convnet
+def get_conv(in_channels, out_channels, kernel_size=3, padding=0, stride=1, dropout=0):
+    return nn.Sequential(
+        nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, stride=stride, 
+                    padding=padding, bias=False),
+        nn.BatchNorm2d(out_channels),
+        nn.LeakyReLU(dropout),
+        nn.Dropout(dropout)
+    )
+
+# SfSNet Models
+class ResNetBlock(nn.Module):
+    """ Basic building block of ResNet to be used for Normal and Albedo Residual Blocks
+    """
+    def __init__(self, in_planes, out_planes, stride=1):
+        super(ResNetBlock, self).__init__()
+        self.conv1 = nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(planes)
+        self.conv2 = nn.Conv2d(out_planes, out_planes, kernel_size=3, stride=1, padding=1, bias=False)
+        self.bn2 = nn.BatchNorm2d(out_planes)
+        self.shortcut = nn.Sequential()
+
+    def forward(self, x):
+        out = F.relu(self.bn1(x))
+        out = F.relu(self.bn2(self.conv1(out)))
+        out = self.conv2(out)
+        out += self.shortcut(x)
+        return out
+
+class baseFeaturesExtractions(nn.Module):
+    """ Base Feature extraction
+    """
+    def __init__(self):
+        super(baseFeaturesExtractions, self).__init__()
+        self.conv1 = get_conv(3, 64, kernel_size=7, padding=3)
+        self.conv2 = get_conv(64, 128, kernel_size=3, padding=1)
+        self.conv3 = get_conv(128, 128, kernel_size=3, stride=2, padding=1)
+
+    def forward(self, x):
+        out = self.conv1(x)
+        out = self.conv2(out)
+        out = self.conv3(out)
+        return out
+
+class NormalResidualBlock(nn.Module):
+    """ Net to general Normal from features
+    """
+    def __init__(self):
+        super(NormalResidualBlock, self).__init__()
+        self.block1 = ResNetBlock(128, 128)
+        self.block2 = ResNetBlock(128, 128)
+        self.block3 = ResNetBlock(128, 128)
+        self.block4 = ResNetBlock(128, 128)
+        self.block5 = ResNetBlock(128, 128)
+        self.bn1    = nn.BatchNorm2d(128)
+    
+    def forward(self, x):
+        out = self.block1(x)
+        out = self.block2(out)
+        out = self.block3(out)
+        out = self.block4(out)
+        out = self.block5(out)
+        out = F.relu(self.bn1(out))
+        return out
+
+class AlbedoResidualBlock(nn.Module):
+    """ Net to general Albedo from features
+    """
+    def __init__(self):
+        super(AlbedoResidualBlock, self).__init__()
+        self.block1 = ResNetBlock(128, 128)
+        self.block2 = ResNetBlock(128, 128)
+        self.block3 = ResNetBlock(128, 128)
+        self.block4 = ResNetBlock(128, 128)
+        self.block5 = ResNetBlock(128, 128)
+        self.bn1    = nn.BatchNorm2d(128)
+    
+    def forward(self, x):
+        out = self.block1(x)
+        out = self.block2(out)
+        out = self.block3(out)
+        out = self.block4(out)
+        out = self.block5(out)
+        out = F.relu(self.bn1(out))
+        return out
+
+class NormalGenerationNet(nn.Module):
+    """ Generating Normal
+    """
+    def __init__(self):
+        super(NormalGenerationNet, self).__init__()
+        self.upsample = nn.UpsamplingBilinear2d(size=(128, 128), scale_factor=None)
+        self.conv1    = get_conv(128, 64, kernel_size=1, stride=1)
+        self.conv2    = get_conv(64, 64, kernel_size=3, padding=1)
+        self.conv3    = nn.Conv2d(64, 3, kernel_size=1)
+
+    def forward(self, x):
+        out = self.upsample(x)
+        out = self.conv1(out)
+        out = self.conv2(out)
+        out = self.conv3(out)
+        return out
+
+class AlbedoGenerationNet(nn.Module):
+    """ Generating Albedo
+    """
+    def __init__(self):
+        super(AlbedoGenerationNet, self).__init__()
+        self.upsample = nn.UpsamplingBilinear2d(size=(128, 128), scale_factor=None)
+        self.conv1    = get_conv(128, 64, kernel_size=1, stride=1)
+        self.conv2    = get_conv(64, 64, kernel_size=3, padding=1)
+        self.conv3    = nn.Conv2d(64, 3, kernel_size=1)
+
+    def forward(self, x):
+        out = self.upsample(x)
+        out = self.conv1(out)
+        out = self.conv2(out)
+        out = self.conv3(out)
+        return out
+
+class LightEstimator(nn.Module):
+    """ Estimate lighting from normal, albedo and conv features
+    """
+    def __init__(self):
+        super(LightEstimator, self).__init__()
+        self.conv1 = nn.Conv2d(384, 128, kernel_size=1)
+        self.pool  = nn.AvgPool2d(64) 
+        self.fc    = nn.Linear(128, 27)
+
+    def forward(self, x):
+        out = self.conv1(x)
+        out = self.pool(out)
+        out = self.fc(out)
+        return out
+        
