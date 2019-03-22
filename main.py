@@ -23,12 +23,12 @@ if torch.cuda.is_available():
 # data processing
 train_dataset, val_dataset = get_dataset(train_data, 10)
 
-train_dl = DataLoader(train_dataset, batch_size=1, shuffle=True)
-val_dl   = DataLoader(val_dataset, batch_size=1)
+train_dl = DataLoader(train_dataset, batch_size=6, shuffle=True)
+val_dl   = DataLoader(val_dataset, batch_size=6)
 print('Train data: ', len(train_dl), ' Val data: ', len(val_dl))
 
 # Debugging and check working
-# validate_shading_method(train_dl)
+validate_shading_method(train_dl)
 
 # Initialize models
 
@@ -54,4 +54,4 @@ if use_cuda:
 train(conv_model, normal_residual_model, albedo_residual_model, \
           light_estimator_model, normal_gen_model, albedo_gen_model, \
           shading_model, image_recon_model, train_dl, val_dl, \
-          num_epochs = 1, log_path = './metadata/', use_cuda=use_cuda)
+          num_epochs = 1, log_path = './results/metadata/', use_cuda=use_cuda)

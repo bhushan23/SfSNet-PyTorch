@@ -36,11 +36,17 @@ class sfsNetShading(nn.Module):
 
         assert(c == len(sh))
         shading = torch.zeros(b, c, h, w)
+       
         for j in range(c):
             l = sh[j]
+            # Scale to 'h x w' dim
+            l = l.repeat(1, h*w).view(b, h, w, 9)
+            # Convert l into 'batch size', 'Index SH', 'h', 'w'
+            l = l.permute([0, 3, 1, 2])
+            # Generate shading
             shading[:, j, :, :] = Y1 * l[:, 0] + Y2 * l[:, 1] + Y3 * l[:, 2] + \
-                                  Y4 * l[:, 3] + Y5 * l[:, 4] + Y6 * l[:, 5] + \
-                                  Y7 * l[:, 6] + Y8 * l[:, 7] + Y9 * l[:, 8]
+                                Y4 * l[:, 3] + Y5 * l[:, 4] + Y6 * l[:, 5] + \
+                                Y7 * l[:, 6] + Y8 * l[:, 7] + Y9 * l[:, 8]
 
         return shading
 
@@ -177,6 +183,8 @@ class LightEstimator(nn.Module):
     def forward(self, x):
         out = self.conv1(x)
         out = self.pool(out)
+        # reshape to batch_size x 128
+        out = out.view(-1, 128)
         out = self.fc(out)
         return out
 

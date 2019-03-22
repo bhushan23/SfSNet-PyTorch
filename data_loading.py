@@ -10,7 +10,7 @@ from skimage import io
 from PIL import Image
 import pandas as pd
 
-IMAGE_SIZE = 64
+IMAGE_SIZE = 128
 
 def get_dataset(dir, validation_split=0):
     albedo  = []
@@ -62,7 +62,7 @@ def get_dataset(dir, validation_split=0):
 
     # Build custom datasets
     transform = transforms.Compose([
-                # transforms.Resize(64),
+                transforms.Resize(IMAGE_SIZE),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
             ])
@@ -83,7 +83,7 @@ class SfSNetDataset(Dataset):
         self.transform = transform
         self.dataset_len = len(self.albedo)
         self.mask_transform = transforms.Compose([
-                              # transforms.Resize(64),
+                              transforms.Resize(IMAGE_SIZE),
                               transforms.ToTensor(),
                             ])
 
@@ -93,7 +93,7 @@ class SfSNetDataset(Dataset):
         normal = self.transform(Image.open(self.normal[index]))
         mask   = self.mask_transform(Image.open(self.mask[index]))
         pd_sh  = pd.read_csv(self.sh[index], sep='\t', header = None)
-        sh     = torch.tensor(pd_sh.values)
+        sh     = torch.tensor(pd_sh.values).type(torch.float)
 
         return albedo, normal, mask, sh, face
 

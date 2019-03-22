@@ -19,7 +19,7 @@ def predict_sfsnet(conv_model, normal_residual_model, albedo_residual_model,
                     shading_model, image_recon_model, dl, train_epoch_num = 0,
                     use_cuda = False, out_folder = None):
     # debugging flag to dump image
-    fix_bix_dump = 5
+    fix_bix_dump = 0
 
     normal_loss = nn.L1Loss()
     albedo_loss = nn.L1Loss()
@@ -51,7 +51,7 @@ def predict_sfsnet(conv_model, normal_residual_model, albedo_residual_model,
         # predicted_face == reconstruction
         predicted_normal, predicted_albedo, predicted_sh, predicted_shading, predicted_face = sfsnet_pipeline(conv_model, normal_residual_model, albedo_residual_model,
                                                                         light_estimator_model, normal_gen_model, albedo_gen_model,
-                                                                        shading_model, image_recon_model)
+                                                                        shading_model, image_recon_model, face)
         if bix == fix_bix_dump:
             # save predictions in log folder
             file_name = out_folder + 'val_' + str(train_epoch_num) + '_' + str(fix_bix_dump)
@@ -70,7 +70,7 @@ def predict_sfsnet(conv_model, normal_residual_model, albedo_residual_model,
         # SH loss
         current_sh_loss     = sh_loss(predicted_sh, sh)
         # Reconstruction loss
-        current_recon_loss  = recon_loss(out_recon, face)
+        current_recon_loss  = recon_loss(predicted_face, face)
 
         total_loss = lamda_recon * current_recon_loss + lamda_normal * current_normal_loss \
                         + lamda_albedo * current_albedo_loss + lamda_sh * current_sh_loss
@@ -121,7 +121,7 @@ def sfsnet_pipeline(conv_model, normal_residual_model, albedo_residual_model,
 def train(conv_model, normal_residual_model, albedo_residual_model,
           light_estimator_model, normal_gen_model, albedo_gen_model,
           shading_model, image_recon_model, train_dl, val_dl,
-          num_epochs = 10, log_path = './metadata/', use_cuda=False):
+          num_epochs = 10, log_path = './results/metadata/', use_cuda=False):
 
     model_checkpoint_dir = log_path + 'checkpoints/'
     out_images_dir       = log_path + 'out_images/'
