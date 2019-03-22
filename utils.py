@@ -2,6 +2,9 @@ import matplotlib.pyplot as plt
 import torchvision
 from PIL import Image
 
+def applyMask(input_img, mask):
+    return input_img * mask
+
 def denorm(x):
     out = (x + 1) / 2
     return out.clamp(0, 1)

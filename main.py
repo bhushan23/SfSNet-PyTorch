@@ -16,6 +16,7 @@ train_data = '/home/bhushan/work/thesis/sfsnet/data/'
 device_type = 'cpu'
 if torch.cuda.is_available():
     device_type = 'cuda'
+    use_cuda    = True
 
 # data processing
 train_dataset, val_dataset = get_dataset(train_data, 10)

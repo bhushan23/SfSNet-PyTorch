@@ -12,9 +12,6 @@ from models import sfsNetShading
 #         x = x.cuda()
 #     return Variable(x)
 
-def applyMask(input_img, mask):
-    return input_img * mask
-
 # Start of log based shading generation method
 # Credits: Zhixin Shu for providing following method
 class waspShadeRenderer(nn.Module):

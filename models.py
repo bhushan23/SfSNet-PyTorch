@@ -179,4 +179,13 @@ class LightEstimator(nn.Module):
         out = self.pool(out)
         out = self.fc(out)
         return out
+
+class ReconstructImage(nn.Module):
+    """ Reconstruct Image from shading and albedo
+    """
+    def __init__(self):
+        super(ReconstructImage, self).__init__()
+    
+    def forward(self, shading, albedo):
+        return shading * albedo
         
