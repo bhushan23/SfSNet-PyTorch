@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-import torch.functional as F
+import torch.nn.functional as F
 
 class sfsNetShading(nn.Module):
     def __init__(self):
@@ -62,7 +62,7 @@ class ResNetBlock(nn.Module):
     def __init__(self, in_planes, out_planes, stride=1):
         super(ResNetBlock, self).__init__()
         self.conv1 = nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride, padding=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(planes)
+        self.bn1 = nn.BatchNorm2d(out_planes)
         self.conv2 = nn.Conv2d(out_planes, out_planes, kernel_size=3, stride=1, padding=1, bias=False)
         self.bn2 = nn.BatchNorm2d(out_planes)
         self.shortcut = nn.Sequential()

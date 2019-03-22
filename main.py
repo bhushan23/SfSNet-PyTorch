@@ -15,6 +15,7 @@ from models import *
 train_data = '/home/bhushan/work/thesis/sfsnet/data/'
 
 device_type = 'cpu'
+use_cuda    = False
 if torch.cuda.is_available():
     device_type = 'cuda'
     use_cuda    = True

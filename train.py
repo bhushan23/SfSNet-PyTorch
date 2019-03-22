@@ -89,7 +89,7 @@ def predict_sfsnet(conv_model, normal_residual_model, albedo_residual_model,
 
 def sfsnet_pipeline(conv_model, normal_residual_model, albedo_residual_model,
                     light_estimator_model, normal_gen_model, albedo_gen_model,
-                    shading_model, image_recon_model):
+                    shading_model, image_recon_model, face):
     # Following is training pipeline
     # 1. Pass Image from Conv Model to extract features
     out_features = conv_model(face)
@@ -127,7 +127,7 @@ def train(conv_model, normal_residual_model, albedo_residual_model,
     out_images_dir       = log_path + 'out_images/'
     model_parameters = list(conv_model.parameters()) + list(normal_residual_model.parameters()) \
                        + list(albedo_residual_model.parameters()) + list(light_estimator_model.parameters()) \
-                       + list(normal_gen_model.parameters()) + list(albedo_gen_model) \
+                       + list(normal_gen_model.parameters()) + list(albedo_gen_model.parameters()) \
                        + list(shading_model.parameters()) + list(image_recon_model.parameters())
 
     optimizer = torch.optim.Adam(model_parameters, lr = 0.001)
@@ -178,7 +178,7 @@ def train(conv_model, normal_residual_model, albedo_residual_model,
 
             predicted_normal, predicted_albedo, predicted_sh, out_shading, out_recon = sfsnet_pipeline(conv_model, normal_residual_model, albedo_residual_model, \
                                                                                         light_estimator_model, normal_gen_model, albedo_gen_model, \
-                                                                                        shading_model, image_recon_model)            
+                                                                                        shading_model, image_recon_model, face)            
 
             # Loss computation
             # Normal loss
