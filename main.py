@@ -35,9 +35,9 @@ def main():
         parser.add_argument('--log_dir', type=str, default='/home/bhushan/work/thesis/sfsnet/results/',
                         help='Log Path')
     else:  
-        parser.add_argument('--train_data', type=str, default='/home/bsonawane/work/thesis/sfsnet/data/',
+        parser.add_argument('--train_data', type=str, default='./data/',
                         help='Training Dataset path')
-        parser.add_argument('--log_dir', type=str, default='/home/bsonawane/work/thesis/sfsnet/results/',
+        parser.add_argument('--log_dir', type=str, default='./results/',
                         help='Log Path')
 
     args = parser.parse_args()
