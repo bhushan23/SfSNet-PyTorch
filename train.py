@@ -5,6 +5,14 @@ import numpy as np
 from model import *
 from utils import *
 
+## TODOS:
+## 1. Dump SH in file
+## 2. Save models
+## 
+## Notes:
+## 1. SH is not normalized
+## 2. Face is normalized and denormalized - shall we not normalize in the first place?
+
 def predict_sfsnet(conv_model, normal_residual_model, albedo_residual_model,
                     light_estimator_model, normal_gen_model, albedo_gen_model,
                     shading_model, image_recon_modelmodel, dl, train_epoch_num = 0,
@@ -48,8 +56,8 @@ def predict_sfsnet(conv_model, normal_residual_model, albedo_residual_model,
             file_name = out_folder + 'val_' + str(train_epoch_num) + '_' + str(fix_bix_dump)
             save_image(predicted_normal, path=file_name + '_normal.png', mask=mask) 
             save_image(predicted_albedo, path=file_name + '_albedo.png', mask=mask) 
-            save_image(predicted_face, path=file_name + '_face.png', mask=mask)
-            save_image(predicted_shading, path=file_name + '_shading.png', mask = mask)
+            save_image(predicted_face, denormalize=False, path=file_name + '_face.png', mask=mask)
+            save_image(predicted_shading, denormalize=False, path=file_name + '_shading.png', mask = mask)
             # TODO:
             # Dump SH as CSV or TXT file
         
@@ -101,10 +109,10 @@ def sfsnet_pipeline(conv_model, normal_residual_model, albedo_residual_model,
     predicted_sh = light_estimator_model(all_features)
 
     # 4. Generate shading
-    out_shading = shading_model(predicted_normal, predicted_sh)
+    out_shading = shading_model(denorm(predicted_normal), predicted_sh)
 
     # 5. Reconstruction of image
-    out_recon = image_recon_model(out_shading, predicted_albedo)
+    out_recon = image_recon_model(out_shading, denorm(predicted_albedo))
         
     return predicted_normal, predicted_albedo, predicted_sh, out_shading, out_recon
 
@@ -178,7 +186,9 @@ def train(conv_model, normal_residual_model, albedo_residual_model,
             # SH loss
             current_sh_loss     = sh_loss(predicted_sh, sh)
             # Reconstruction loss
-            current_recon_loss  = recon_loss(out_recon, face)
+            # Edge case: Shading generation requires denormalized normal and sh
+            # Hence, denormalizing face here
+            current_recon_loss  = recon_loss(out_recon, denorm(face))
 
             total_loss = lamda_recon * current_recon_loss + lamda_normal * current_normal_loss \
                             + lamda_albedo * current_albedo_loss + lamda_sh * current_sh_loss

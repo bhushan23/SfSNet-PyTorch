@@ -21,7 +21,7 @@ if torch.cuda.is_available():
 # data processing
 train_dataset, val_dataset = get_dataset(train_data, 10)
 
-train_dl = DataLoader(train_dataset, batch_size = 1, shuffle=True)
+train_dl = DataLoader(train_dataset, batch_size, shuffle=True)
 val_dl   = DataLoader(val_dataset, batch_size = 5)
 print('Train data: ', len(train_dl), ' Val data: ', len(val_dl))
 

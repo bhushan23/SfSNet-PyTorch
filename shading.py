@@ -111,8 +111,8 @@ def validate_shading_method(train_dl):
     normal = denorm(normal)
     albedo = denorm(albedo)
     shading = getShadingFromNormalAndSH(normal, sh)
-    save_image(albedo,  denormalize=False,mask=mask, path='./results/shading_from_normal/albedo.png')
-    save_image(normal,  denormalize=False,mask=mask, path='./results/shading_from_normal/normal.png')
+    save_image(albedo,  denormalize=False, mask=mask, path='./results/shading_from_normal/albedo.png')
+    save_image(normal,  denormalize=False, mask=mask, path='./results/shading_from_normal/normal.png')
     save_image(shading, denormalize=False, mask=mask, path='./results/shading_from_normal/shading_ours.png')
 
     recon   = shading * albedo

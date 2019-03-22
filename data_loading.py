@@ -68,10 +68,9 @@ def get_dataset(dir, validation_split=0):
             ])
     
     full_dataset = SfSNetDataset(albedo, face, normal, mask, sh, transform)  
-
-    train_dataset = full_dataset
-    val_dataset = full_dataset
-    # train_dataset, val_dataset = random_split(full_dataset, [train_count, validation_count])
+    # TODO: This will vary dataset run-to-run
+    # Shall we just split manually to ensure run-to-run train-val dataset is same?
+    train_dataset, val_dataset = random_split(full_dataset, [train_count, validation_count])
     return train_dataset, val_dataset
 
 class SfSNetDataset(Dataset):
