@@ -16,7 +16,6 @@ from models import *
 def main():
     ON_SERVER = False
 
-    if ON_SERVER:
     parser = argparse.ArgumentParser(description='SfSNet - Residual')
     parser.add_argument('--batch-size', type=int, default=8, metavar='N',
                         help='input batch size for training (default: 8)')
@@ -44,7 +43,6 @@ def main():
     args = parser.parse_args()
     use_cuda = not args.no_cuda and torch.cuda.is_available()
 
-    wandb.config.update(args)
     torch.manual_seed(args.seed)
 
     # initialization
@@ -53,6 +51,8 @@ def main():
     lr         = args.lr
     wt_decay   = args.wt-decay
     log_dir    = args.log_dir
+
+    wandb.log({'lr':lr, 'weight decay': wt_decay})
 
     # data processing
     train_dataset, val_dataset = get_dataset(train_data, 10)
