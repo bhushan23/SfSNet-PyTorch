@@ -9,7 +9,7 @@ def denorm(x):
     out = (x + 1) / 2
     return out.clamp(0, 1)
 
-def save_image(pic, denormalize=True, path=None, mask=None):
+def get_image_grid(pic, denormalize=True, mask=None):
     if denormalize:
         pic = denorm(pic)
     
@@ -18,9 +18,19 @@ def save_image(pic, denormalize=True, path=None, mask=None):
 
     grid = torchvision.utils.make_grid(pic, nrow=8, padding=2)
     ndarr = grid.mul(255).clamp(0, 255).byte().permute(1, 2, 0).cpu().numpy()
+    return ndarr
+
+def save_image(pic, denormalize=True, path=None, mask=None):
+    ndarr = get_image_grid(pic, denormalize=denormalize, mask=mask)    
+    
     if path == None:
         plt.imshow(ndarr)
         plt.show()
     else:
         im = Image.fromarray(ndarr)
         im.save(path)
+
+def wandb_log_images(wandb, img, mask, caption, step, log_name, denormalize=True):
+    ndarr = get_image_grid(img, denormalize=denormalize, mask=mask)
+    wimg = wandb.Image(ndarr, caption=caption)
+    wandb.log({log_name: wimg})

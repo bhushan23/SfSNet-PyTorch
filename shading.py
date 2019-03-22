@@ -105,8 +105,12 @@ def getShadingFromNormalAndSH(Normal, rSH):
     return outShadingB
 
 
-def validate_shading_method(train_dl):
+def validate_shading_method(train_dl, wandb):
     albedo, normal, mask, sh, face = next(iter(train_dl))
+
+    face_ndarr = get_image_grid(face, mask=mask)
+    wimg = wandb.Image(face_ndarr, caption="Ground Truth Face")
+    wandb.log({'Face Image': wimg})
 
     normal = denorm(normal)
     albedo = denorm(albedo)
