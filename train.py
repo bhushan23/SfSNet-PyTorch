@@ -37,6 +37,11 @@ def predict_sfsnet(conv_model, normal_residual_model, albedo_residual_model,
         sh_loss     = sh_loss.cuda()
         recon_loss  = recon_loss.cuda()
 
+    tloss = 0 # Total loss
+    nloss = 0 # Normal loss
+    aloss = 0 # Albedo loss
+    shloss = 0 # SH loss
+    rloss = 0 # Reconstruction loss
     for bix, data in enumerate(dl):
         albedo, normal, mask, sh, face = data
         if use_cuda:
@@ -57,7 +62,8 @@ def predict_sfsnet(conv_model, normal_residual_model, albedo_residual_model,
             file_name = out_folder + 'val_' + str(train_epoch_num) + '_' + str(fix_bix_dump)
             save_image(predicted_normal, path=file_name + '_normal.png', mask=mask) 
             save_image(predicted_albedo, path=file_name + '_albedo.png', mask=mask) 
-            save_image(predicted_face, denormalize=False, path=file_name + '_face.png', mask=mask)
+            save_image(predicted_face, denormalize=False, path=file_name + '_recon-face.png', mask=mask)
+            save_image(face, path=file_name + '_gt-face.png', mask=mask)
             save_image(predicted_shading, denormalize=False, path=file_name + '_shading.png', mask = mask)
             # TODO:
             # Dump SH as CSV or TXT file
@@ -214,9 +220,10 @@ def train(conv_model, normal_residual_model, albedo_residual_model,
                     nloss / train_set_len, aloss / train_set_len, shloss / train_set_len, rloss / train_set_len))
             v_total, v_normal, v_albedo, v_sh, v_recon = predict_sfsnet(conv_model, normal_residual_model, albedo_residual_model,
                                                                 light_estimator_model, normal_gen_model, albedo_gen_model,
-                                                                shading_model, image_recon_model, val_dl, out_folder=out_images_dir)
+                                                                shading_model, image_recon_model, val_dl, train_epoch_num=epoch,
+                                                                use_cuda=use_cuda, out_folder=out_images_dir)
 
-            print('Val set results: Total Loss: {}, Normal Loss: {}, Albedo Loss: {}, SH Loss: {}, Recon Loss: {}'.format(v_total,
+            print('Val set results: Total Loss: {}, Normal Loss: {}, Albedo Loss: {}, SH Loss: {}, Recon Loss: {}\n'.format(v_total,
                     v_normal, v_albedo, v_sh, v_recon))
             # TODO: MODEL SAVING
             # torch.save(model.cpu().state_dict(), log_path + 'model_'+str(epoch)+'.pkl')

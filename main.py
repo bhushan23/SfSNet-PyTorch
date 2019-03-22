@@ -54,4 +54,4 @@ if use_cuda:
 train(conv_model, normal_residual_model, albedo_residual_model, \
           light_estimator_model, normal_gen_model, albedo_gen_model, \
           shading_model, image_recon_model, train_dl, val_dl, \
-          num_epochs = 1, log_path = './results/metadata/', use_cuda=use_cuda)
+          num_epochs = 10, log_path = './results/metadata/', use_cuda=use_cuda)
