@@ -2,12 +2,13 @@ import torch
 import torch.nn as nn
 import numpy as np
 
-from model import *
+from models import *
 from utils import *
 
 ## TODOS:
 ## 1. Dump SH in file
-## 2. Save models
+## 2. Save model - Load model
+## 
 ## 
 ## Notes:
 ## 1. SH is not normalized
@@ -15,7 +16,7 @@ from utils import *
 
 def predict_sfsnet(conv_model, normal_residual_model, albedo_residual_model,
                     light_estimator_model, normal_gen_model, albedo_gen_model,
-                    shading_model, image_recon_modelmodel, dl, train_epoch_num = 0,
+                    shading_model, image_recon_model, dl, train_epoch_num = 0,
                     use_cuda = False, out_folder = None):
     # debugging flag to dump image
     fix_bix_dump = 5
@@ -36,7 +37,7 @@ def predict_sfsnet(conv_model, normal_residual_model, albedo_residual_model,
         sh_loss     = sh_loss.cuda()
         recon_loss  = recon_loss.cuda()
 
-    for bix, data in enumerate(train_dl):
+    for bix, data in enumerate(dl):
         albedo, normal, mask, sh, face = data
         if use_cuda:
             albedo = albedo.cuda()
@@ -122,6 +123,8 @@ def train(conv_model, normal_residual_model, albedo_residual_model,
           shading_model, image_recon_model, train_dl, val_dl,
           num_epochs = 10, log_path = './metadata/', use_cuda=False):
 
+    model_checkpoint_dir = log_path + 'checkpoints/'
+    out_images_dir       = log_path + 'out_images/'
     model_parameters = list(conv_model.parameters()) + list(normal_residual_model.parameters()) \
                        + list(albedo_residual_model.parameters()) + list(light_estimator_model.parameters()) \
                        + list(normal_gen_model.parameters()) + list(albedo_gen_model) \
@@ -138,7 +141,6 @@ def train(conv_model, normal_residual_model, albedo_residual_model,
         albedo_loss = albedo_loss.cuda()
         sh_loss     = sh_loss.cuda()
         recon_loss  = recon_loss.cuda()
-
 
     lamda_recon  = 0.5
     lamda_albedo = 0.5
@@ -174,7 +176,7 @@ def train(conv_model, normal_residual_model, albedo_residual_model,
             # Apply Mask on input image
             face = applyMask(face, mask)
 
-            predicted_normal, predicted_albedo, predicted_sh, out_shading out_recon = sfsnet_pipeline(conv_model, normal_residual_model, albedo_residual_model, \
+            predicted_normal, predicted_albedo, predicted_sh, out_shading, out_recon = sfsnet_pipeline(conv_model, normal_residual_model, albedo_residual_model, \
                                                                                         light_estimator_model, normal_gen_model, albedo_gen_model, \
                                                                                         shading_model, image_recon_model)            
 
@@ -210,10 +212,11 @@ def train(conv_model, normal_residual_model, albedo_residual_model,
         if epoch % 1 == 0:
             print('Training set results: Total Loss: {}, Normal Loss: {}, Albedo Loss: {}, SH Loss: {}, Recon Loss: {}'.format(tloss / train_set_len, \
                     nloss / train_set_len, aloss / train_set_len, shloss / train_set_len, rloss / train_set_len))
-            v_total, v_normal, v_albedo, v_sh, v_recon = predict(conv_model, normal_residual_model, albedo_residual_model,
+            v_total, v_normal, v_albedo, v_sh, v_recon = predict_sfsnet(conv_model, normal_residual_model, albedo_residual_model,
                                                                 light_estimator_model, normal_gen_model, albedo_gen_model,
-                                                                shading_model, image_recon_model, val_dl)
+                                                                shading_model, image_recon_model, val_dl, out_folder=out_images_dir)
 
-            print('Train Accuracy: {}, Val Accuracy: {}'.format(predict(model, train_dl), predict(model, val_dl, write_to_file='Val_data.csv')))
+            print('Val set results: Total Loss: {}, Normal Loss: {}, Albedo Loss: {}, SH Loss: {}, Recon Loss: {}'.format(v_total,
+                    v_normal, v_albedo, v_sh, v_recon))
             # TODO: MODEL SAVING
             # torch.save(model.cpu().state_dict(), log_path + 'model_'+str(epoch)+'.pkl')
