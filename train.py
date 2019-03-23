@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import numpy as np
+import os
 
 from models import *
 from utils import *
@@ -65,6 +66,7 @@ def predict_sfsnet(conv_model, normal_residual_model, albedo_residual_model,
             save_image(predicted_face, denormalize=False, path=file_name + '_recon-face.png', mask=mask)
             save_image(face, path=file_name + '_gt-face.png', mask=mask)
             save_image(predicted_shading, denormalize=False, path=file_name + '_shading.png', mask = mask)
+            save_image(predicted_, denormalize=False, path=file_name + '_shading.png', mask = mask)
             # TODO:
             # Dump SH as CSV or TXT file
         
@@ -97,7 +99,8 @@ def predict_sfsnet(conv_model, normal_residual_model, albedo_residual_model,
     wandb_log_images(wandb, predicted_albedo, mask, 'Val Albedo', train_epoch_num, 'Val Albedo')
     wandb_log_images(wandb, predicted_shading, mask, 'Val Shading', train_epoch_num, 'Val Shading', denormalize=False)
     wandb_log_images(wandb, predicted_face, mask, 'Val Recon', train_epoch_num, 'Val Recon', denormalize=False)
-    
+    wandb_log_images(wandb, face, mask, 'Val Ground Truth', train_epoch_num, 'Val Ground Truth')
+
     # return average loss over dataset
     return tloss / len_dl, nloss / len_dl, aloss / len_dl, shloss / len_dl, rloss / len_dl
 
@@ -141,6 +144,8 @@ def train(conv_model, normal_residual_model, albedo_residual_model,
 
     model_checkpoint_dir = log_path + 'checkpoints/'
     out_images_dir       = log_path + 'out_images/'
+    os.system('mkdir -p {}'.format(model_checkpoint_dir))
+    os.system('mkdir -p {}'.format(out_images_dir))
     model_parameters = list(conv_model.parameters()) + list(normal_residual_model.parameters()) \
                        + list(albedo_residual_model.parameters()) + list(light_estimator_model.parameters()) \
                        + list(normal_gen_model.parameters()) + list(albedo_gen_model.parameters()) \
@@ -164,7 +169,6 @@ def train(conv_model, normal_residual_model, albedo_residual_model,
     lamda_sh     = 0.1
 
     if use_cuda:
-        loss = loss.cuda()
         normal_loss = normal_loss.cuda()
         albedo_loss = albedo_loss.cuda()
         sh_loss     = sh_loss.cuda()
@@ -246,5 +250,6 @@ def train(conv_model, normal_residual_model, albedo_residual_model,
             wandb_log_images(wandb, predicted_albedo, mask, 'Train Albedo', epoch, 'Train Albedo')
             wandb_log_images(wandb, out_shading, mask, 'Train Shading', epoch, 'Train Shading', denormalize=False)
             wandb_log_images(wandb, out_recon, mask, 'Train Recon', epoch, 'Train Recon', denormalize=False)
+            wandb_log_images(wandb, face, mask, 'Train Ground Truth', epoch, 'Train Ground Truth')
             # TODO: MODEL SAVING
             # torch.save(model.cpu().state_dict(), log_path + 'model_'+str(epoch)+'.pkl')

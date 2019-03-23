@@ -36,7 +36,11 @@ class sfsNetShading(nn.Module):
 
         assert(c == len(sh))
         shading = torch.zeros(b, c, h, w)
-       
+        
+        if torch.cuda.is_available():
+            Y1 = Y1.cuda()
+            shading = shading.cuda()
+
         for j in range(c):
             l = sh[j]
             # Scale to 'h x w' dim
