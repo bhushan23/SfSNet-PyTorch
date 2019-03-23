@@ -14,7 +14,7 @@ from train import *
 from models import *
 
 def main():
-    ON_SERVER = True
+    ON_SERVER = False
 
     parser = argparse.ArgumentParser(description='SfSNet - Residual')
     parser.add_argument('--batch-size', type=int, default=8, metavar='N',
@@ -30,14 +30,18 @@ def main():
     parser.add_argument('--seed', type=int, default=1, metavar='S',
                         help='random seed (default: 1)')
     if ON_SERVER:
-        parser.add_argument('--train_data', type=str, default='/nfs/bigdisk/bsonawane/sfsnet_data/train_data/',
-                        help='Training Dataset path')
-        parser.add_argument('--test_data', type=str, default='/nfs/bigdisk/bsonawane/sfsnet_data/test_data/',
-                        help='Testing Dataset path')
+        train_csv = '/nfs/bigdisk/bsonawane/sfsnet_data/train.csv'
+        test_csv  = '/nfs/bigdisk/bsonawane/sfsnet_data/test.csv'
 
+        parser.add_argument('--train_data', type=str, default='/nfs/bigdisk/bsonawane/sfsnet_data/train/',
+                        help='Training Dataset path')
+        parser.add_argument('--test_data', type=str, default='/nfs/bigdisk/bsonawane/sfsnet_data/test/',
+                        help='Testing Dataset path')
         parser.add_argument('--log_dir', type=str, default='./results/',
                         help='Log Path')
     else:  
+        train_csv = './data/train.csv'
+        test_csv  = './data/test.csv'
         parser.add_argument('--train_data', type=str, default='./data/train/',
                         help='Training Dataset path')
         parser.add_argument('--test_data', type=str, default='./data/test/',
@@ -63,8 +67,8 @@ def main():
     model_dir  = args.load_model
 
     # data processing
-    train_dataset, val_dataset = get_dataset(train_data, 10)
-    test_dataset, _ = get_dataset(test_data, 0)
+    train_dataset, val_dataset = get_dataset(train_data, read_from_csv=train_csv, validation_split=10)
+    test_dataset, _ = get_dataset(test_data, read_from_csv=test_csv, validation_split=0)
 
     train_dl = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_dl   = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)

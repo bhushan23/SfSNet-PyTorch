@@ -52,7 +52,7 @@ def generate_data_csv(dir, save_location):
             ext = '.png'
             if k == 'light':
                 ext = '.txt'
-            file_name = split[0] + '/' + k + '_' + '_'.join(split[1:]) + ext
+            file_name = split[0] + '/' + split[1] + '_' + k + '_' + '_'.join(split[2:]) + ext
             v.append(file_name)
 
     df = pd.DataFrame(data=name_to_list)
@@ -117,8 +117,10 @@ def get_dataset(dir, read_from_csv=None, validation_split=0):
     train_dataset, val_dataset = random_split(full_dataset, [train_count, validation_count])
     return train_dataset, val_dataset
 
-# generate_data_csv('./data/train/', './data/train.csv')
-# generate_data_csv('./data/test/', './data/test.csv')
+# dataset_path='/nfs/bigdisk/bsonawane/sfsnet_data/'
+# dataset_path = './data/'
+# generate_data_csv(dataset_path + 'train/', dataset_path + '/train.csv')
+# generate_data_csv(dataset_path + 'test/', dataset_path + '/test.csv')
 
 class SfSNetDataset(Dataset):
     def __init__(self, albedo, face, normal, mask, sh, transform = None):
