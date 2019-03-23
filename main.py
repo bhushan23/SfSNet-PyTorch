@@ -14,7 +14,7 @@ from train import *
 from models import *
 
 def main():
-    ON_SERVER = True
+    ON_SERVER = False
 
     parser = argparse.ArgumentParser(description='SfSNet - Residual')
     parser.add_argument('--batch-size', type=int, default=8, metavar='N',
@@ -37,9 +37,9 @@ def main():
         parser.add_argument('--log_dir', type=str, default='./results/',
                         help='Log Path')
     else:  
-        parser.add_argument('--train_data', type=str, default='./data/',
+        parser.add_argument('--train_data', type=str, default='./data/train/',
                         help='Training Dataset path')
-        parser.add_argument('--test_data', type=str, default='./test_data/',
+        parser.add_argument('--test_data', type=str, default='./data/test/',
                         help='Training Dataset path')
         parser.add_argument('--log_dir', type=str, default='./results/',
                         help='Log Path')

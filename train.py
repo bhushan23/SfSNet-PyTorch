@@ -8,17 +8,52 @@ from utils import *
 
 ## TODOS:
 ## 1. Dump SH in file
-## 2. Save model - Load model
 ## 
 ## 
 ## Notes:
 ## 1. SH is not normalized
 ## 2. Face is normalized and denormalized - shall we not normalize in the first place?
 
-def predict_sfsnet(conv_model, normal_residual_model, albedo_residual_model,
+
+# Enable WANDB Logging
+WANDB_ENABLE = True
+
+def test_celeba(conv_model, normal_residual_model, albedo_residual_model,
                     light_estimator_model, normal_gen_model, albedo_gen_model,
                     shading_model, image_recon_model, dl, train_epoch_num = 0,
                     use_cuda = False, out_folder = None, wandb = None):
+    for bix, data in enumerate(dl):
+        face, mask = data
+        if use_cuda:
+            face   = face.cuda()
+            mask   = mask.cuda()
+
+        # Apply Mask on input image
+        face = applyMask(face, mask)
+        # predicted_face == reconstruction
+        predicted_normal, predicted_albedo, predicted_sh, predicted_shading, predicted_face = sfsnet_pipeline(conv_model, normal_residual_model, albedo_residual_model,
+                                                                        light_estimator_model, normal_gen_model, albedo_gen_model,
+                                                                        shading_model, image_recon_model, face)
+        # save predictions in log folder
+        file_name = out_folder + 'test_' + str(train_epoch_num) + '_' + str(fix_bix_dump)
+        save_image(predicted_normal, path=file_name + '_predicted_normal.png', mask=mask) 
+        save_image(predicted_albedo, path=file_name + '_predicted_albedo.png', mask=mask) 
+        save_image(predicted_face, denormalize=False, path=file_name + '_predicted_face.png', mask=mask)
+        save_image(predicted_shading, denormalize=False, path=file_name + '_predicted_shading.png', mask = mask)
+        save_image(face, path=file_name + '_gt_face.png', mask=mask)
+
+        if WANDB_ENABLE:
+            wandb_log_images(wandb, predicted_normal, mask, 'Test Predicted Normal', train_epoch_num, 'Test Predicted Normal')
+            wandb_log_images(wandb, predicted_albedo, mask, 'Test Predicted Albedo', train_epoch_num, 'Test Predicted Albedo')
+            wandb_log_images(wandb, predicted_shading, mask, 'Test Predicted Shading', train_epoch_num, 'Test Predicted Shading', denormalize=False)
+            wandb_log_images(wandb, predicted_face, mask, 'Test Recon', train_epoch_num, 'Test Recon', denormalize=False)
+            wandb_log_images(wandb, face, mask, 'Test Ground Truth Face', train_epoch_num, 'Test Ground Truth Face')
+
+
+def predict_sfsnet(conv_model, normal_residual_model, albedo_residual_model,
+                    light_estimator_model, normal_gen_model, albedo_gen_model,
+                    shading_model, image_recon_model, dl, train_epoch_num = 0,
+                    use_cuda = False, out_folder = None, wandb = None, suffix = 'Val'):
     # debugging flag to dump image
     fix_bix_dump = 0
 
@@ -91,15 +126,18 @@ def predict_sfsnet(conv_model, normal_residual_model, albedo_residual_model,
         rloss += current_recon_loss.item()
     
     len_dl = len(dl)
-    wandb.log({'Val Total loss': tloss/len_dl, 'Val Albedo loss': aloss/len_dl, 'Val Normal loss': nloss/len_dl, \
+    wandb.log({suffix+' Total loss': tloss/len_dl, 'Val Albedo loss': aloss/len_dl, 'Val Normal loss': nloss/len_dl, \
                'Val SH loss': shloss/len_dl, 'Val Recon loss': rloss/len_dl}, step=train_epoch_num)
             
     # log images
-    wandb_log_images(wandb, predicted_normal, mask, 'Val Normal', train_epoch_num, 'Val Normal')
-    wandb_log_images(wandb, predicted_albedo, mask, 'Val Albedo', train_epoch_num, 'Val Albedo')
-    wandb_log_images(wandb, predicted_shading, mask, 'Val Shading', train_epoch_num, 'Val Shading', denormalize=False)
-    wandb_log_images(wandb, predicted_face, mask, 'Val Recon', train_epoch_num, 'Val Recon', denormalize=False)
-    wandb_log_images(wandb, face, mask, 'Val Ground Truth', train_epoch_num, 'Val Ground Truth')
+    if WANDB_ENABLED:
+        wandb_log_images(wandb, predicted_normal, mask, suffix+' Predicted Normal', train_epoch_num, 'Val Predicted Normal')
+        wandb_log_images(wandb, predicted_albedo, mask, 'Val Predicted Albedo', train_epoch_num, 'Val Predicted Albedo')
+        wandb_log_images(wandb, predicted_shading, mask, 'Val Predicted Shading', train_epoch_num, 'Val Predicted Shading', denormalize=False)
+        wandb_log_images(wandb, predicted_face, mask, 'Val Recon', train_epoch_num, 'Val Recon', denormalize=False)
+        wandb_log_images(wandb, face, mask, 'Val Ground Truth', train_epoch_num, 'Val Ground Truth')
+        wandb_log_images(wandb, normal, mask, 'Val Ground Truth Normal', train_epoch_num, 'Val Ground Normal')
+        wandb_log_images(wandb, albedo, mask, 'Val Ground Truth Albedo', train_epoch_num, 'Val Ground Albedo')
 
     # return average loss over dataset
     return tloss / len_dl, nloss / len_dl, aloss / len_dl, shloss / len_dl, rloss / len_dl
@@ -140,12 +178,28 @@ def train(conv_model, normal_residual_model, albedo_residual_model,
           light_estimator_model, normal_gen_model, albedo_gen_model,
           shading_model, image_recon_model, train_dl, val_dl,
           num_epochs = 10, log_path = './results/metadata/', use_cuda=False, wandb=None,
-          lr = 0.01, wt_decay=0.005):
+          lr = 0.01, wt_decay=0.005, load_models=False):
 
     model_checkpoint_dir = log_path + 'checkpoints/'
     out_images_dir       = log_path + 'out_images/'
+    out_val_images_dir   = out_images_dir + 'val/'
+    out_test_images_dir  = out_images_dir + 'test/'
+
     os.system('mkdir -p {}'.format(model_checkpoint_dir))
-    os.system('mkdir -p {}'.format(out_images_dir))
+    os.system('mkdir -p {}'.format(out_val_images_dir))
+    os.system('mkdir -p {}'.format(out_test_images_dir))
+
+    if load_models:
+        torch.load_state_dict(torch.load(model_checkpoint_dir + 'conv_model.pkl'))
+        torch.load_state_dict(torch.load(model_checkpoint_dir + 'normal_residual_model.pkl'))
+        torch.load_state_dict(torch.load(model_checkpoint_dir + 'albedo_residual_model.pkl'))
+        torch.load_state_dict(torch.load(model_checkpoint_dir + 'light_estimator_model.pkl'))
+        torch.load_state_dict(torch.load(model_checkpoint_dir + 'normal_gen_model.pkl'))
+        torch.load_state_dict(torch.load(model_checkpoint_dir + 'albedo_gen_model.pkl'))
+        torch.load_state_dict(torch.load(model_checkpoint_dir + 'shading_model.pkl'))
+        torch.load_state_dict(torch.load(model_checkpoint_dir + 'image_recon_model.pkl'))
+
+    # Collect model parameters
     model_parameters = list(conv_model.parameters()) + list(normal_residual_model.parameters()) \
                        + list(albedo_residual_model.parameters()) + list(light_estimator_model.parameters()) \
                        + list(normal_gen_model.parameters()) + list(albedo_gen_model.parameters()) \
@@ -199,7 +253,6 @@ def train(conv_model, normal_residual_model, albedo_residual_model,
             predicted_normal, predicted_albedo, predicted_sh, out_shading, out_recon = sfsnet_pipeline(conv_model, normal_residual_model, albedo_residual_model, \
                                                                                         light_estimator_model, normal_gen_model, albedo_gen_model, \
                                                                                         shading_model, image_recon_model, face)            
-
             # Loss computation
             # Normal loss
             current_normal_loss = normal_loss(predicted_normal, normal)
@@ -229,16 +282,16 @@ def train(conv_model, normal_residual_model, albedo_residual_model,
         
         print('Epoch: {} - Total Loss: {}, Normal Loss: {}, Albedo Loss: {}, SH Loss: {}, Recon Loss: {}'.format(epoch, tloss, \
                     nloss, aloss, shloss, rloss))
-        if epoch % 1 == 0:
+        if epoch % 5 == 0:
                         
             print('Training set results: Total Loss: {}, Normal Loss: {}, Albedo Loss: {}, SH Loss: {}, Recon Loss: {}'.format(tloss / train_set_len, \
                     nloss / train_set_len, aloss / train_set_len, shloss / train_set_len, rloss / train_set_len))
             v_total, v_normal, v_albedo, v_sh, v_recon = predict_sfsnet(conv_model, normal_residual_model, albedo_residual_model,
                                                                 light_estimator_model, normal_gen_model, albedo_gen_model,
                                                                 shading_model, image_recon_model, val_dl, train_epoch_num=epoch,
-                                                                use_cuda=use_cuda, out_folder=out_images_dir, wandb=wandb)
+                                                                use_cuda=use_cuda, out_folder=out_val_images_dir, wandb=wandb)
 
-            print('Val set results: Total Loss: {}, Normal Loss: {}, Albedo Loss: {}, SH Loss: {}, Recon Loss: {}\n'.format(v_total,
+            print('Val set results: Total Loss: {}, Normal Loss: {}, Albedo Loss: {}, SH Loss: {}, Recon Loss: {}'.format(v_total,
                     v_normal, v_albedo, v_sh, v_recon))
             
             # Log training info
@@ -246,10 +299,31 @@ def train(conv_model, normal_residual_model, albedo_residual_model,
                         'Train SH loss': shloss/train_set_len, 'Train Recon loss': rloss/train_set_len}, step=epoch)
             
             # Log images in wandb
-            wandb_log_images(wandb, predicted_normal, mask, 'Train Normal', epoch, 'Train Normal')
-            wandb_log_images(wandb, predicted_albedo, mask, 'Train Albedo', epoch, 'Train Albedo')
-            wandb_log_images(wandb, out_shading, mask, 'Train Shading', epoch, 'Train Shading', denormalize=False)
-            wandb_log_images(wandb, out_recon, mask, 'Train Recon', epoch, 'Train Recon', denormalize=False)
-            wandb_log_images(wandb, face, mask, 'Train Ground Truth', epoch, 'Train Ground Truth')
-            # TODO: MODEL SAVING
-            # torch.save(model.cpu().state_dict(), log_path + 'model_'+str(epoch)+'.pkl')
+            if WANDB_EABLED:
+                wandb_log_images(wandb, predicted_normal, mask, 'Train Predicted Normal', epoch, 'Train Predicted Normal')
+                wandb_log_images(wandb, predicted_albedo, mask, 'Train Predicted Albedo', epoch, 'Train Predicted Albedo')
+                wandb_log_images(wandb, out_shading, mask, 'Train Predicted Shading', epoch, 'Train Predicted Shading', denormalize=False)
+                wandb_log_images(wandb, out_recon, mask, 'Train Recon', epoch, 'Train Recon', denormalize=False)
+                wandb_log_images(wandb, face, mask, 'Train Ground Truth', epoch, 'Train Ground Truth')
+                wandb_log_images(wandb, normal, mask, 'Train Ground Truth Normal', epoch, 'Train Ground Truth Normal')
+                wandb_log_images(wandb, albedo, mask, 'Train Ground Truth Albedo', epoch, 'Train Ground Truth Albedo')
+
+           
+            # Model saving
+            torch.save(conv_model.state_dict(), model_checkpoint_dir + 'conv_model.pkl')
+            torch.save(normal_residual_model.state_dict(), model_checkpoint_dir + 'normal_residual_model.pkl')
+            torch.save(albedo_residual_model.state_dict(), model_checkpoint_dir + 'albedo_residual_model.pkl')
+            torch.save(light_estimator_model.state_dict(), model_checkpoint_dir + 'light_estimator_model.pkl')
+            torch.save(normal_gen_model.state_dict(), model_checkpoint_dir + 'normal_gen_model.pkl')
+            torch.save(albedo_gen_model.state_dict(), model_checkpoint_dir + 'albedo_gen_model.pkl')
+            torch.save(shading_model.state_dict(), model_checkpoint_dir + 'shading_model.pkl')
+            torch.save(image_recon_model.state_dict(), model_checkpoint_dir + 'image_recon_model.pkl')
+
+        if epoch % 10:
+            t_total, t_normal, t_albedo, t_sh, t_recon = predict_sfsnet(conv_model, normal_residual_model, albedo_residual_model,
+                                                                            light_estimator_model, normal_gen_model, albedo_gen_model,
+                                                                            shading_model, image_recon_model, test_dl, train_epoch_num=epoch,
+                                                                            use_cuda=use_cuda, out_folder=out_test_images_dir, wandb=wandb, suffix='Test')
+            print('Test-set results: Total Loss: {}, Normal Loss: {}, Albedo Loss: {}, SH Loss: {}, Recon Loss: {}\n'.format(t_total,
+                                                                                                    t_normal, t_albedo, t_sh, t_recon))
+         
