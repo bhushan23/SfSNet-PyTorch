@@ -14,7 +14,7 @@ from train import *
 from models import *
 
 def main():
-    ON_SERVER = False
+    ON_SERVER = True
 
     parser = argparse.ArgumentParser(description='SfSNet - Residual')
     parser.add_argument('--batch-size', type=int, default=8, metavar='N',
@@ -34,6 +34,7 @@ def main():
                         help='Training Dataset path')
         parser.add_argument('--test_data', type=str, default='/nfs/bigdisk/bsonawane/sfsnet_data/test_data/',
                         help='Testing Dataset path')
+
         parser.add_argument('--log_dir', type=str, default='./results/',
                         help='Log Path')
     else:  
@@ -44,6 +45,8 @@ def main():
         parser.add_argument('--log_dir', type=str, default='./results/',
                         help='Log Path')
 
+    parser.add_argument('--load_model', type=str, default=None,
+                        help='load model from')
     args = parser.parse_args()
     use_cuda = not args.no_cuda and torch.cuda.is_available()
 
@@ -57,6 +60,7 @@ def main():
     wt_decay   = args.wt_decay
     log_dir    = args.log_dir
     epochs     = args.epochs
+    model_dir  = args.load_model
 
     # data processing
     train_dataset, val_dataset = get_dataset(train_data, 10)
@@ -95,9 +99,19 @@ def main():
         shading_model         = shading_model.cuda()
         image_recon_model     = image_recon_model.cuda()
 
+    if model_dir is not None:
+        conv_model.load_state_dict(torch.load(model_dir + 'conv_model.pkl'))
+        normal_residual_model.load_state_dict(torch.load(model_dir + 'normal_residual_model.pkl'))
+        albedo_residual_model.load_state_dict(torch.load(model_dir + 'albedo_residual_model.pkl'))
+        light_estimator_model.load_state_dict(torch.load(model_dir + 'light_estimator_model.pkl'))
+        normal_gen_model.load_state_dict(torch.load(model_dir + 'normal_gen_model.pkl'))
+        albedo_gen_model.load_state_dict(torch.load(model_dir + 'albedo_gen_model.pkl'))
+        shading_model.load_state_dict(torch.load(model_dir + 'shading_model.pkl'))
+        image_recon_model.load_state_dict(torch.load(model_dir + 'image_recon_model.pkl'))
+
     train(conv_model, normal_residual_model, albedo_residual_model, \
             light_estimator_model, normal_gen_model, albedo_gen_model, \
-            shading_model, image_recon_model, train_dl, val_dl, \
+            shading_model, image_recon_model, train_dl, val_dl, test_dl, \
             num_epochs=epochs, log_path=log_dir, use_cuda=use_cuda, wandb=wandb, \
             lr=lr, wt_decay=wt_decay)
 

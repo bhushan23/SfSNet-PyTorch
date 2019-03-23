@@ -54,7 +54,7 @@ def get_dataset(dir, validation_split=0):
     # with open('mask.txt', 'w') as f:
     #     for item in mask:
     #         f.write("%s\n" % item)    
-
+    print(len(albedo) , len(face) , len(normal) , len(depth) , len(mask) , len(sh))
     assert(len(albedo) == len(face) == len(normal) == len(depth) == len(mask) == len(sh))
     dataset_size = len(albedo)
     validation_count = int (validation_split * dataset_size / 100)
