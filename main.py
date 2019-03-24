@@ -21,8 +21,8 @@ def main():
                         help='input batch size for training (default: 8)')
     parser.add_argument('--epochs', type=int, default=10, metavar='N',
                         help='number of epochs to train (default: 10)')
-    parser.add_argument('--lr', type=float, default=0.01, metavar='LR',
-                        help='learning rate (default: 0.01)')
+    parser.add_argument('--lr', type=float, default=0.001, metavar='LR',
+                        help='learning rate (default: 0.001)')
     parser.add_argument('--wt-decay', type=float, default=0.0005, metavar='W',
                         help='SGD momentum (default: 0.0005)')
     parser.add_argument('--no-cuda', action='store_true', default=False,
@@ -92,30 +92,18 @@ def main():
     albedo_gen_model      = AlbedoGenerationNet()
     shading_model         = sfsNetShading()
     image_recon_model     = ReconstructImage()
-
+    
+    sfs_net_pipeline      = SfsNetPipeline(conv_model, normal_residual_model, albedo_residual_model, \
+                                            light_estimator_model, normal_gen_model, albedo_gen_model, \
+                                            shading_model, image_recon_model)
     if use_cuda:
-        conv_model            = conv_model.cuda()
-        normal_residual_model = normal_residual_model.cuda()
-        albedo_residual_model = albedo_residual_model.cuda()
-        light_estimator_model = light_estimator_model.cuda()
-        normal_gen_model      = normal_gen_model.cuda()
-        albedo_gen_model      = albedo_gen_model.cuda()
-        shading_model         = shading_model.cuda()
-        image_recon_model     = image_recon_model.cuda()
+        sfs_net_pipeline = sfs_net_pipeline.cuda()
 
     if model_dir is not None:
-        conv_model.load_state_dict(torch.load(model_dir + 'conv_model.pkl'))
-        normal_residual_model.load_state_dict(torch.load(model_dir + 'normal_residual_model.pkl'))
-        albedo_residual_model.load_state_dict(torch.load(model_dir + 'albedo_residual_model.pkl'))
-        light_estimator_model.load_state_dict(torch.load(model_dir + 'light_estimator_model.pkl'))
-        normal_gen_model.load_state_dict(torch.load(model_dir + 'normal_gen_model.pkl'))
-        albedo_gen_model.load_state_dict(torch.load(model_dir + 'albedo_gen_model.pkl'))
-        shading_model.load_state_dict(torch.load(model_dir + 'shading_model.pkl'))
-        image_recon_model.load_state_dict(torch.load(model_dir + 'image_recon_model.pkl'))
+        sfs_net_pipeline.load_state_dict(torch.load(model_dir + 'sfs_net_model.pkl'))
 
-    train(conv_model, normal_residual_model, albedo_residual_model, \
-            light_estimator_model, normal_gen_model, albedo_gen_model, \
-            shading_model, image_recon_model, train_dl, val_dl, test_dl, \
+    wandb.watch(sfs_net_pipeline)
+    train(sfs_net_pipeline, train_dl, val_dl, test_dl, \
             num_epochs=epochs, log_path=log_dir, use_cuda=use_cuda, wandb=wandb, \
             lr=lr, wt_decay=wt_decay)
 

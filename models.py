@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from utils import denorm
+
 class sfsNetShading(nn.Module):
     def __init__(self):
         super(sfsNetShading, self).__init__()
@@ -201,3 +203,46 @@ class ReconstructImage(nn.Module):
     def forward(self, shading, albedo):
         return shading * albedo
         
+class SfsNetPipeline(nn.Module):
+    """ SfSNet Pipeline
+    """
+    def __init__(self, conv_model, normal_residual_model, albedo_residual_model,
+                    light_estimator_model, normal_gen_model, albedo_gen_model,
+                    shading_model, image_recon_model):
+        super(SfsNetPipeline, self).__init__()
+        self.conv_model = conv_model
+        self.normal_residual_model = normal_residual_model
+        self.albedo_residual_model = albedo_residual_model
+        self.light_estimator_model = light_estimator_model
+        self.normal_gen_model      = normal_gen_model
+        self.albedo_gen_model      = albedo_gen_model
+        self.shading_model         = shading_model
+        self.image_recon_model     = image_recon_model
+
+    def forward(self, face):
+        # Following is training pipeline
+        # 1. Pass Image from Conv Model to extract features
+        out_features = self.conv_model(face)
+
+        # 2 a. Pass Conv features through Normal Residual
+        out_normal_features = self.normal_residual_model(out_features)
+        # 2 b. Pass Conv features through Albedo Residual
+        out_albedo_features = self.albedo_residual_model(out_features)
+        
+        # 3 a. Generate Normal
+        predicted_normal = self.normal_gen_model(out_normal_features)
+        # 3 b. Generate Albedo
+        predicted_albedo = self.albedo_gen_model(out_albedo_features)
+        # 3 c. Estimate lighting
+        # First, concat conv, normal and albedo features over channels dimension
+        all_features = torch.cat((out_features, out_normal_features, out_albedo_features), dim=1)
+        # Predict SH
+        predicted_sh = self.light_estimator_model(all_features)
+
+        # 4. Generate shading
+        out_shading = self.shading_model(denorm(predicted_normal), predicted_sh)
+
+        # 5. Reconstruction of image
+        out_recon = self.image_recon_model(out_shading, denorm(predicted_albedo))
+                    
+        return predicted_normal, predicted_albedo, predicted_sh, out_shading, out_recon
