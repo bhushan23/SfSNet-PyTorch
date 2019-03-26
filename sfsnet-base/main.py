@@ -42,9 +42,9 @@ def main():
     else:  
         train_csv = './data/train.csv'
         test_csv  = './data/test.csv'
-        parser.add_argument('--train_data', type=str, default='./data/train/',
+        parser.add_argument('--train_data', type=str, default='../data/train/',
                         help='Training Dataset path')
-        parser.add_argument('--test_data', type=str, default='./data/test/',
+        parser.add_argument('--test_data', type=str, default='../data/test/',
                         help='Training Dataset path')
         parser.add_argument('--log_dir', type=str, default='./results/',
                         help='Log Path')
