@@ -191,7 +191,7 @@ def train(sfs_net_model, train_dl, val_dl, test_dl,
         shloss = 0 # SH loss
         rloss = 0 # Reconstruction loss
 
-        for _, data in enumerate(train_dl):
+        for bix, data in enumerate(train_dl):
             albedo, normal, mask, sh, face = data
             if use_cuda:
                 albedo = albedo.cuda()
@@ -244,7 +244,7 @@ def train(sfs_net_model, train_dl, val_dl, test_dl,
             print('Val set results: Total Loss: {}, Normal Loss: {}, Albedo Loss: {}, SH Loss: {}, Recon Loss: {}'.format(v_total,
                     v_normal, v_albedo, v_sh, v_recon))
             
-            file_name = out_train_images_dir +  'train_' + str(train_epoch_num) + '_' + str(fix_bix_dump)
+            file_name = out_train_images_dir +  'train_' + str(epoch) + '_' + str(bix)
             save_image(predicted_normal, path=file_name + '_predicted_normal.png', mask=mask) 
             save_image(predicted_albedo, path=file_name + '_predicted_albedo.png', mask=mask) 
             save_image(out_recon, denormalize=False, path=file_name + '_predicted_face.png', mask=mask)

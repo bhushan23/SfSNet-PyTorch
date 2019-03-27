@@ -86,9 +86,7 @@ def predict_sfsnet(sfs_net_model, dl, train_epoch_num = 0,
         face = applyMask(face, mask)
         # predicted_face == reconstruction
         predicted_normal, predicted_albedo, predicted_sh, predicted_shading, predicted_corrected_shading, predicted_face = sfs_net_model(face)
-        # predicted_normal, predicted_albedo, predicted_sh, predicted_shading, predicted_face = sfsnet_pipeline(conv_model, normal_residual_model, albedo_residual_model,
-        #                                                                light_estimator_model, normal_gen_model, albedo_gen_model,
-        #                                                                shading_model, image_recon_model, face)
+
         if bix == fix_bix_dump:
             # save predictions in log folder
             file_name = out_folder + suffix + '_' + str(train_epoch_num) + '_' + str(fix_bix_dump)
@@ -193,7 +191,7 @@ def train(sfs_net_model, train_dl, val_dl, test_dl,
         shloss = 0 # SH loss
         rloss = 0 # Reconstruction loss
 
-        for _, data in enumerate(train_dl):
+        for bix, data in enumerate(train_dl):
             albedo, normal, mask, sh, face = data
             if use_cuda:
                 albedo = albedo.cuda()
@@ -205,7 +203,7 @@ def train(sfs_net_model, train_dl, val_dl, test_dl,
             # Apply Mask on input image
             face = applyMask(face, mask)
 
-            predicted_normal, predicted_albedo, predicted_sh, out_shading, out_predicted_shading, out_recon = sfs_net_model(face)
+            predicted_normal, predicted_albedo, predicted_sh, out_shading, out_corrected_shading, out_recon = sfs_net_model(face)
 
             # Loss computation
             # Normal loss
@@ -246,7 +244,7 @@ def train(sfs_net_model, train_dl, val_dl, test_dl,
             print('Val set results: Total Loss: {}, Normal Loss: {}, Albedo Loss: {}, SH Loss: {}, Recon Loss: {}'.format(v_total,
                     v_normal, v_albedo, v_sh, v_recon))
             
-            file_name = out_train_images_dir +  'train_' + str(train_epoch_num) + '_' + str(fix_bix_dump)
+            file_name = out_train_images_dir +  'train_' + str(epoch) + '_' + str(bix)
             save_image(predicted_normal, path=file_name + '_predicted_normal.png', mask=mask) 
             save_image(predicted_albedo, path=file_name + '_predicted_albedo.png', mask=mask) 
             save_image(out_recon, denormalize=False, path=file_name + '_predicted_face.png', mask=mask)
@@ -265,7 +263,7 @@ def train(sfs_net_model, train_dl, val_dl, test_dl,
                 wandb_log_images(wandb, predicted_normal, mask, 'Train Predicted Normal', epoch, 'Train Predicted Normal')
                 wandb_log_images(wandb, predicted_albedo, mask, 'Train Predicted Albedo', epoch, 'Train Predicted Albedo')
                 wandb_log_images(wandb, out_shading, mask, 'Train Predicted Shading', epoch, 'Train Predicted Shading', denormalize=False)
-                wandb_log_images(wandb, out_predicted_shading, mask, 'Train Predicted Corrected Shading', epoch, 'Train Predicted Corrected Shading', denormalize=False)
+                wandb_log_images(wandb, out_corrected_shading, mask, 'Train Predicted Corrected Shading', epoch, 'Train Predicted Corrected Shading', denormalize=False)
                 wandb_log_images(wandb, out_recon, mask, 'Train Recon', epoch, 'Train Recon', denormalize=False)
                 wandb_log_images(wandb, face, mask, 'Train Ground Truth', epoch, 'Train Ground Truth')
                 wandb_log_images(wandb, normal, mask, 'Train Ground Truth Normal', epoch, 'Train Ground Truth Normal')
