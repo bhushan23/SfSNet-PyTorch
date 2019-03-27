@@ -149,10 +149,12 @@ def train(sfs_net_model, train_dl, val_dl, test_dl,
     out_images_dir       = log_path + 'out_images/'
     out_val_images_dir   = out_images_dir + 'val/'
     out_test_images_dir  = out_images_dir + 'test/'
+    out_train_images_dir = out_images_dir + 'train/'
 
     os.system('mkdir -p {}'.format(model_checkpoint_dir))
     os.system('mkdir -p {}'.format(out_val_images_dir))
     os.system('mkdir -p {}'.format(out_test_images_dir))
+    os.system('mkdir -p {}'.format(out_train_images_dir))
 
     # Collect model parameters
     model_parameters = sfs_net_model.parameters()
@@ -242,6 +244,15 @@ def train(sfs_net_model, train_dl, val_dl, test_dl,
             print('Val set results: Total Loss: {}, Normal Loss: {}, Albedo Loss: {}, SH Loss: {}, Recon Loss: {}'.format(v_total,
                     v_normal, v_albedo, v_sh, v_recon))
             
+            file_name = out_train_images_dir +  'train_' + str(train_epoch_num) + '_' + str(fix_bix_dump)
+            save_image(predicted_normal, path=file_name + '_predicted_normal.png', mask=mask) 
+            save_image(predicted_albedo, path=file_name + '_predicted_albedo.png', mask=mask) 
+            save_image(out_recon, denormalize=False, path=file_name + '_predicted_face.png', mask=mask)
+            save_image(face, path=file_name + '_gt_face.png', mask=mask)
+            save_image(out_shading, denormalize=False, path=file_name + '_predicted_shading.png', mask = mask)
+            save_image(normal, path=file_name + '_normal.png', mask=mask) 
+            save_image(albedo, path=file_name + '_albedo.png', mask=mask) 
+
             # Log training info
             wandb.log({'Train Total loss': tloss/train_set_len, 'Train Albedo loss': aloss/train_set_len, 'Train Normal loss': nloss/train_set_len, \
                         'Train SH loss': shloss/train_set_len, 'Train Recon loss': rloss/train_set_len}, step=epoch)
