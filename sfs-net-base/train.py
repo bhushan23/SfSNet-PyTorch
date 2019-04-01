@@ -220,7 +220,7 @@ def train(sfs_net_model, syn_data, celeba_data,
         recon_loss  = recon_loss.cuda()
 
     syn_train_len    = len(syn_train_dl)
-    celeb_train_len  = len(celeba_train_dl)
+    celeba_train_len  = len(celeba_train_dl)
 
     for epoch in range(1, num_epochs+1):
         tloss = 0 # Total loss
@@ -278,13 +278,14 @@ def train(sfs_net_model, syn_data, celeba_data,
                 rloss += current_recon_loss.item()
 
             # Get and train on CelebA data
-            c_face = next(celeba_train_iter, None)
-            if c_face is not None:
+            c_data = next(celeba_train_iter, None)
+            if c_data is not None:
                 # Get Mask as well if available
                 c_mask = None
                 if use_cuda:
-                    c_face   = c_face.cuda()
+                    c_data   = c_data.cuda()
                 
+                c_face = c_data
                 # Apply Mask on input image
                 # face = applyMask(face, mask)
 
@@ -301,12 +302,15 @@ def train(sfs_net_model, syn_data, celeba_data,
                 optimizer.step()
 
                 celeba_tloss += crecon_loss.item()
+
+            if data is None and c_data is None:
+                break
             
         print('Epoch: {} - Total Loss: {}, Normal Loss: {}, Albedo Loss: {}, SH Loss: {}, Recon Loss: {}, CelebA loss'.format(epoch, tloss, \
                     nloss, aloss, shloss, rloss, celeba_tloss))
         if epoch % 1 == 0:
             print('Training set results: Total Loss: {}, Normal Loss: {}, Albedo Loss: {}, SH Loss: {}, Recon Loss: {}, CelebA Loss: {}'.format(tloss / syn_train_len, \
-                    nloss / syn_train_len, aloss / syn_train_len, shloss / syn_train_len, rloss / syn_train_len, celeba_tloss / celeb_train_len))
+                    nloss / syn_train_len, aloss / syn_train_len, shloss / syn_train_len, rloss / syn_train_len, celeba_tloss / celeba_train_len))
             # Log training info
             wandb.log({'Train Total loss': tloss/syn_train_len, 'Train Albedo loss': aloss/syn_train_len, 'Train Normal loss': nloss/syn_train_len, \
                         'Train SH loss': shloss/syn_train_len, 'Train Recon loss': rloss/syn_train_len, 'Train CelebA loss:': celeba_tloss/celeba_train_len}, step=epoch)
@@ -317,7 +321,7 @@ def train(sfs_net_model, syn_data, celeba_data,
             wandb_log_images(wandb, predicted_albedo, mask, 'Train Predicted Albedo', epoch, 'Train Predicted Albedo', path=file_name + '_predicted_albedo.png')
             wandb_log_images(wandb, out_shading, mask, 'Train Predicted Shading', epoch, 'Train Predicted Shading', path=file_name + '_predicted_shading.png', denormalize=False)
             wandb_log_images(wandb, out_recon, mask, 'Train Recon', epoch, 'Train Recon', path=file_name + '_predicted_face.png', denormalize=False)
-            wandb_log_images(wandb, face, mask, 'Train Ground Truth', epoch, 'Train Ground Truth', path=train_set_lenfile_name + '_gt_face.png')
+            wandb_log_images(wandb, face, mask, 'Train Ground Truth', epoch, 'Train Ground Truth', path=file_name + '_gt_face.png')
             wandb_log_images(wandb, normal, mask, 'Train Ground Truth Normal', epoch, 'Train Ground Truth Normal', path=file_name + '_gt_normal.png')
             wandb_log_images(wandb, albedo, mask, 'Train Ground Truth Albedo', epoch, 'Train Ground Truth Albedo', path=file_name + '_gt_albedo.png')
 
@@ -327,7 +331,7 @@ def train(sfs_net_model, syn_data, celeba_data,
             wandb_log_images(wandb, c_predicted_albedo, c_mask, 'Train CelebA Predicted Albedo', epoch, 'Train CelebA Predicted Albedo', path=file_name + '_c_predicted_albedo.png')
             wandb_log_images(wandb, c_out_shading, c_mask, 'Train CelebA Predicted Shading', epoch, 'Train CelebA Predicted Shading', path=file_name + '_c_predicted_shading.png', denormalize=False)
             wandb_log_images(wandb, c_out_recon, c_mask, 'Train CelebA Recon', epoch, 'Train CelebA Recon', path=file_name + '_c_predicted_face.png', denormalize=False)
-            wandb_log_images(wandb, c_face, c_mask, 'Train CelebA Ground Truth', epoch, 'Train CelebA Ground Truth', path=train_set_lenfile_name + '_c_gt_face.png')
+            wandb_log_images(wandb, c_face, c_mask, 'Train CelebA Ground Truth', epoch, 'Train CelebA Ground Truth', path=file_name + '_c_gt_face.png')
 
             v_total, v_normal, v_albedo, v_sh, v_recon = predict_sfsnet(sfs_net_model, syn_val_dl, train_epoch_num=epoch, use_cuda=use_cuda,
                                                                          out_folder=out_syn_images_dir+'/val/', wandb=wandb)

@@ -36,7 +36,7 @@ def wandb_log_images(wandb, img, mask, caption, step, log_name, path=None, denor
     # save image if path is provided
     if path is not None:
         im = Image.fromarray(ndarr)
-        im.sve(path)
+        im.save(path)
 
     wimg = wandb.Image(ndarr, caption=caption)
     wandb.log({log_name: wimg})
