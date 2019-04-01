@@ -30,22 +30,17 @@ def main():
     parser.add_argument('--seed', type=int, default=1, metavar='S',
                         help='random seed (default: 1)')
     if ON_SERVER:
-        train_csv = '/nfs/bigdisk/bsonawane/sfsnet_data/train.csv'
-        test_csv  = '/nfs/bigdisk/bsonawane/sfsnet_data/test.csv'
-
-        parser.add_argument('--train_data', type=str, default='/nfs/bigdisk/bsonawane/sfsnet_data/train/',
-                        help='Training Dataset path')
-        parser.add_argument('--test_data', type=str, default='/nfs/bigdisk/bsonawane/sfsnet_data/test/',
-                        help='Testing Dataset path')
+        parser.add_argument('--syn_data', type=str, default='/nfs/bigdisk/bsonawane/sfsnet_data/',
+                        help='Synthetic Dataset path')
+        parser.add_argument('--celeba_data', type=str, default='/nfs/bigdisk/bsonawane/CelebA-dataset/CelebA_crop_resize_128/',
+                        help='CelebA Dataset path')
         parser.add_argument('--log_dir', type=str, default='./results/',
                         help='Log Path')
     else:  
-        train_csv = './data/train.csv'
-        test_csv  = './data/test.csv'
-        parser.add_argument('--train_data', type=str, default='../data/train/',
-                        help='Training Dataset path')
-        parser.add_argument('--test_data', type=str, default='../data/test/',
-                        help='Training Dataset path')
+        parser.add_argument('--syn_data', type=str, default='../data/sfs-net/',
+                        help='Synthetic Dataset path')
+        parser.add_argument('--celeba_data', type=str, default='../data/celeba/',
+                        help='CelebA Dataset path')
         parser.add_argument('--log_dir', type=str, default='./results/',
                         help='Log Path')
 
@@ -57,27 +52,17 @@ def main():
     torch.manual_seed(args.seed)
 
     # initialization
-    train_data = args.train_data
-    test_data  = args.test_data
+    syn_data = args.syn_data
+    celeba_data = args.celeba_data
     batch_size = args.batch_size
     lr         = args.lr
     wt_decay   = args.wt_decay
     log_dir    = args.log_dir
     epochs     = args.epochs
     model_dir  = args.load_model
-
-    # data processing
-    train_dataset, val_dataset = get_dataset(train_data, read_from_csv=train_csv, validation_split=10)
-    test_dataset, _ = get_dataset(test_data, read_from_csv=test_csv, validation_split=0)
-
-    train_dl = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    val_dl   = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
-    test_dl   = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
-
-    print('Train data: ', len(train_dl), ' Val data: ', len(val_dl))
-
+    
     # Init WandB for logging
-    wandb.init(project='SfSNet-Base')
+    wandb.init(project='SfSNet-Base-temp')
     wandb.log({'lr':lr, 'weight decay': wt_decay})
 
     # Debugging and check working
@@ -103,7 +88,7 @@ def main():
         sfs_net_pipeline.load_state_dict(torch.load(model_dir + 'sfs_net_model.pkl'))
 
     wandb.watch(sfs_net_pipeline)
-    train(sfs_net_pipeline, train_dl, val_dl, test_dl, \
+    train(sfs_net_pipeline, syn_data, celeba_data, \
             num_epochs=epochs, log_path=log_dir, use_cuda=use_cuda, wandb=wandb, \
             lr=lr, wt_decay=wt_decay)
 

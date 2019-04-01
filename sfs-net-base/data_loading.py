@@ -12,7 +12,7 @@ import pandas as pd
 
 IMAGE_SIZE = 128
 
-def generate_data_csv(dir, save_location):
+def generate_sfsnet_data_csv(dir, save_location):
     albedo = set()
     normal = set()
     depth  = set()
@@ -58,7 +58,17 @@ def generate_data_csv(dir, save_location):
     df = pd.DataFrame(data=name_to_list)
     df.to_csv(save_location)
 
-def get_dataset(dir, read_from_csv=None, validation_split=0):
+def generate_celeba_data_csv(dir, save_location):
+    face = []
+    
+    for img in sorted(glob.glob(dir + '*/all/*.jpg')):
+        face.append(img)
+
+    face_to_list = {'face': face}
+    df = pd.DataFrame(data=face_to_list)
+    df.to_csv(save_location)
+
+def get_sfsnet_dataset(dir=None, read_from_csv=None, validation_split=0):
     albedo  = []
     sh      = []
     mask    = []
@@ -117,10 +127,32 @@ def get_dataset(dir, read_from_csv=None, validation_split=0):
     train_dataset, val_dataset = random_split(full_dataset, [train_count, validation_count])
     return train_dataset, val_dataset
 
-# dataset_path='/nfs/bigdisk/bsonawane/sfsnet_data/'
-# dataset_path = './data/'
-# generate_data_csv(dataset_path + 'train/', dataset_path + '/train.csv')
-# generate_data_csv(dataset_path + 'test/', dataset_path + '/test.csv')
+def get_celeba_dataset(dir=None, read_from_csv=None, validation_split=0):
+    face    = []
+
+    if read_from_csv is None:
+        for img in sorted(glob.glob(dir + '*/*_face_*')):
+            face.append(img)    
+    else:
+        df = pd.read_csv(read_from_csv)
+        face   = list(df['face'])
+
+    dataset_size = len(face)
+    validation_count = int (validation_split * dataset_size / 100)
+    train_count      = dataset_size - validation_count
+
+    # Build custom datasets
+    transform = transforms.Compose([
+                transforms.Resize(IMAGE_SIZE),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
+            ])
+    
+    full_dataset = CelebADataset(face, transform)  
+    # TODO: This will vary dataset run-to-run
+    # Shall we just split manually to ensure run-to-run train-val dataset is same?
+    train_dataset, val_dataset = random_split(full_dataset, [train_count, validation_count])
+    return train_dataset, val_dataset
 
 class SfSNetDataset(Dataset):
     def __init__(self, albedo, face, normal, mask, sh, transform = None):
@@ -148,3 +180,19 @@ class SfSNetDataset(Dataset):
     def __len__(self):
         return self.dataset_len
 
+class CelebADataset(Dataset):
+    def __init__(self, face, transform = None):
+        self.face   = face
+        self.transform = transform
+        self.dataset_len = len(self.face)
+        self.mask_transform = transforms.Compose([
+                              transforms.Resize(IMAGE_SIZE),
+                              transforms.ToTensor(),
+                            ])
+
+    def __getitem__(self, index):
+        face   = self.transform(Image.open(self.face[index]))
+        return face
+
+    def __len__(self):
+        return self.dataset_len

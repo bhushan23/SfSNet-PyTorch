@@ -30,7 +30,13 @@ def save_image(pic, denormalize=True, path=None, mask=None):
         im = Image.fromarray(ndarr)
         im.save(path)
 
-def wandb_log_images(wandb, img, mask, caption, step, log_name, denormalize=True):
+def wandb_log_images(wandb, img, mask, caption, step, log_name, path=None, denormalize=True):
     ndarr = get_image_grid(img, denormalize=denormalize, mask=mask)
+
+    # save image if path is provided
+    if path is not None:
+        im = Image.fromarray(ndarr)
+        im.sve(path)
+
     wimg = wandb.Image(ndarr, caption=caption)
     wandb.log({log_name: wimg})
