@@ -102,7 +102,7 @@ def generate_celeba_data_csv(dir, save_location):
     df = pd.DataFrame(data=face_to_list)
     df.to_csv(save_location)
 
-def get_sfsnet_dataset(syn_dir=None, read_from_csv=None, read_celeba_csv=None, validation_split=0):
+def get_sfsnet_dataset(syn_dir=None, read_from_csv=None, read_celeba_csv=None, read_first=None, validation_split=0):
     albedo  = []
     sh      = []
     mask    = []
@@ -130,6 +130,7 @@ def get_sfsnet_dataset(syn_dir=None, read_from_csv=None, read_celeba_csv=None, v
             sh.append(img)
     else:
         df = pd.read_csv(read_from_csv)
+        df = df[:read_first]
         albedo = list(df['albedo'])
         face   = list(df['face'])
         normal = list(df['normal'])
@@ -146,6 +147,7 @@ def get_sfsnet_dataset(syn_dir=None, read_from_csv=None, read_celeba_csv=None, v
         # Merge Synthesized Celeba dataset for Psedo-Supervised training
         if read_celeba_csv is not None:
             df = pd.read_csv(read_celeba_csv)
+            df = df[:read_first]
             albedo += list(df['albedo'])
             face   += list(df['face'])
             normal += list(df['normal'])
@@ -171,7 +173,7 @@ def get_sfsnet_dataset(syn_dir=None, read_from_csv=None, read_celeba_csv=None, v
     train_dataset, val_dataset = random_split(full_dataset, [train_count, validation_count])
     return train_dataset, val_dataset
 
-def get_celeba_dataset(dir=None, read_from_csv=None, validation_split=0):
+def get_celeba_dataset(dir=None, read_from_csv=None, read_first=None, validation_split=0):
     face    = []
 
     if read_from_csv is None:
@@ -179,6 +181,7 @@ def get_celeba_dataset(dir=None, read_from_csv=None, validation_split=0):
             face.append(img)    
     else:
         df = pd.read_csv(read_from_csv)
+        df = df[:read_first]
         face   = list(df['face'])
 
     dataset_size = len(face)

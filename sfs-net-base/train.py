@@ -150,7 +150,7 @@ def predict_sfsnet(sfs_net_model, dl, train_epoch_num = 0,
     # return average loss over dataset
     return tloss / len_dl, nloss / len_dl, aloss / len_dl, shloss / len_dl, rloss / len_dl
 
-def train(sfs_net_model, syn_data, celeba_data=None,
+def train(sfs_net_model, syn_data, celeba_data=None, read_first=None,
           batch_size = 10, num_epochs = 10, log_path = './results/metadata/', use_cuda=False, wandb=None,
           lr = 0.01, wt_decay=0.005):
 
@@ -165,8 +165,8 @@ def train(sfs_net_model, syn_data, celeba_data=None,
         celeba_test_csv = celeba_data + '/test.csv'
 
     # Load Synthetic dataset
-    train_dataset, val_dataset = get_sfsnet_dataset(syn_dir=syn_data+'train/', read_from_csv=syn_train_csv, read_celeba_csv=celeba_train_csv, validation_split=10)
-    test_dataset, _ = get_sfsnet_dataset(syn_dir=syn_data+'test/', read_from_csv=syn_test_csv, read_celeba_csv=celeba_test_csv, validation_split=0)
+    train_dataset, val_dataset = get_sfsnet_dataset(syn_dir=syn_data+'train/', read_from_csv=syn_train_csv, read_celeba_csv=celeba_train_csv, read_first=read_first, validation_split=10)
+    test_dataset, _ = get_sfsnet_dataset(syn_dir=syn_data+'test/', read_from_csv=syn_test_csv, read_celeba_csv=celeba_test_csv, read_first=read_first, validation_split=0)
 
     syn_train_dl  = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     syn_val_dl    = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
