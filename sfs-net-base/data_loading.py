@@ -1,4 +1,5 @@
 import torch
+import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader, random_split
 from torchvision import transforms
 
@@ -10,6 +11,8 @@ from skimage import io
 from PIL import Image
 import pandas as pd
 
+from utils import save_image
+import numpy as np
 IMAGE_SIZE = 128
 
 def generate_sfsnet_data_csv(dir, save_location):
@@ -58,6 +61,37 @@ def generate_sfsnet_data_csv(dir, save_location):
     df = pd.DataFrame(data=name_to_list)
     df.to_csv(save_location)
 
+def generate_celeba_synthesize_data_csv(dir, save_location):
+    albedo = []
+    normal = []
+    depth  = []
+    mask   = []
+    face   = []
+    sh     = []
+
+    name_to_set = {'albedo' : albedo, 'normal' : normal, 'depth' : depth, \
+                    'mask' : mask, 'face' : face, 'light' : sh}
+    
+    for img in sorted(glob.glob(dir + '*_albedo*')):
+        albedo.append(img)
+    
+    for img in sorted(glob.glob(dir + '*_normal*')):
+        normal.append(img)
+
+    for img in sorted(glob.glob(dir + '*_face*')):
+        face.append(img)
+        mask.append('None')
+        depth.append('None')
+
+    for l in sorted(glob.glob(dir + '*_light*')):
+        sh.append(l)
+
+    name_to_list = {'albedo' : albedo, 'normal' : normal, 'depth' : depth, \
+                    'mask' : mask, 'face' : face, 'light' : sh}
+
+    df = pd.DataFrame(data=name_to_list)
+    df.to_csv(save_location)
+
 def generate_celeba_data_csv(dir, save_location):
     face = []
     
@@ -68,7 +102,7 @@ def generate_celeba_data_csv(dir, save_location):
     df = pd.DataFrame(data=face_to_list)
     df.to_csv(save_location)
 
-def get_sfsnet_dataset(dir=None, read_from_csv=None, validation_split=0):
+def get_sfsnet_dataset(syn_dir=None, read_from_csv=None, read_celeba_csv=None, validation_split=0):
     albedo  = []
     sh      = []
     mask    = []
@@ -77,22 +111,22 @@ def get_sfsnet_dataset(dir=None, read_from_csv=None, validation_split=0):
     depth   = []
 
     if read_from_csv is None:
-        for img in sorted(glob.glob(dir + '*/*_albedo_*')):
+        for img in sorted(glob.glob(syn_dir + '*/*_albedo_*')):
             albedo.append(img)
 
-        for img in sorted(glob.glob(dir + '*/*_face_*')):
+        for img in sorted(glob.glob(syn_dir + '*/*_face_*')):
             face.append(img)    
 
-        for img in sorted(glob.glob(dir + '*/*_normal_*')):
+        for img in sorted(glob.glob(syn_dir + '*/*_normal_*')):
             normal.append(img)
 
-        for img in sorted(glob.glob(dir + '*/*_depth_*')):
+        for img in sorted(glob.glob(syn_dir + '*/*_depth_*')):
             depth.append(img)
 
-        for img in sorted(glob.glob(dir + '*/*_mask_*')):
+        for img in sorted(glob.glob(syn_dir + '*/*_mask_*')):
             mask.append(img)
 
-        for img in sorted(glob.glob(dir + '*/*_light_*.txt')):
+        for img in sorted(glob.glob(syn_dir + '*/*_light_*.txt')):
             sh.append(img)
     else:
         df = pd.read_csv(read_from_csv)
@@ -107,7 +141,17 @@ def get_sfsnet_dataset(dir=None, read_from_csv=None, validation_split=0):
                     'mask' : mask, 'face' : face, 'light' : sh}
 
         for _, v in name_to_list.items():
-            v[:] = [dir + el for el in v]
+            v[:] = [syn_dir + el for el in v]
+
+        # Merge Synthesized Celeba dataset for Psedo-Supervised training
+        if read_celeba_csv is not None:
+            df = pd.read_csv(read_celeba_csv)
+            albedo += list(df['albedo'])
+            face   += list(df['face'])
+            normal += list(df['normal'])
+            depth  += list(df['depth'])
+            mask   += list(df['mask'])
+            sh     += list(df['light'])
 
     assert(len(albedo) == len(face) == len(normal) == len(depth) == len(mask) == len(sh))
     dataset_size = len(albedo)
@@ -154,6 +198,54 @@ def get_celeba_dataset(dir=None, read_from_csv=None, validation_split=0):
     train_dataset, val_dataset = random_split(full_dataset, [train_count, validation_count])
     return train_dataset, val_dataset
 
+def generate_celeba_synthesize(sfs_net_model, dl, train_epoch_num = 0,
+                    use_cuda = False, out_folder = None, wandb = None):
+ 
+    # debugging flag to dump image
+    fix_bix_dump = 0
+    recon_loss  = nn.L1Loss() 
+
+    if use_cuda:
+        recon_loss  = recon_loss.cuda()
+
+    tloss = 0 # Total loss
+    rloss = 0 # Reconstruction loss
+
+    for bix, data in enumerate(dl):
+        face = data
+        if use_cuda:
+            face   = face.cuda()
+        
+        # predicted_face == reconstruction
+        predicted_normal, predicted_albedo, predicted_sh, predicted_shading, predicted_face = sfs_net_model(face)
+        
+        # save predictions in log folder
+        file_name = out_folder + str(train_epoch_num) + '_' + str(bix)
+        # log images
+        save_image(predicted_normal, path = file_name+'_normal.png')
+        save_image(predicted_albedo, path = file_name+'_albedo.png')
+        save_image(predicted_shading, path = file_name+'_shading.png')
+        save_image(predicted_face, path = file_name+'_recon.png')
+        save_image(face, path = file_name+'_face.png')
+        np.savetxt(file_name+'_light.txt', predicted_sh.cpu().detach().numpy(), delimiter='\t')
+        
+        # Loss computation
+        # Reconstruction loss
+        total_loss  = recon_loss(predicted_face, face)
+
+        # Logging for display and debugging purposes
+        tloss += total_loss.item()
+    
+    len_dl = len(dl)
+    f = open(filename+'readme.txt', 'w')
+    f.write('Average Reconstruction Loss: ' + str(tloss / len_dl))
+    f.close()
+
+    # return average loss over dataset
+    return tloss / len_dl
+
+
+
 class SfSNetDataset(Dataset):
     def __init__(self, albedo, face, normal, mask, sh, transform = None):
         self.albedo = albedo
@@ -172,7 +264,12 @@ class SfSNetDataset(Dataset):
         albedo = self.transform(Image.open(self.albedo[index]))
         face   = self.transform(Image.open(self.face[index]))
         normal = self.transform(Image.open(self.normal[index]))
-        mask   = self.mask_transform(Image.open(self.mask[index]))
+        if self.mask[index] == 'None':
+            # Load dummy 1 mask for CelebA
+            # To ensure consistency if mask is used
+            mask = torch.ones(3, IMAGE_SIZE, IMAGE_SIZE)
+        else:
+            mask   = self.mask_transform(Image.open(self.mask[index]))
         pd_sh  = pd.read_csv(self.sh[index], sep='\t', header = None)
         sh     = torch.tensor(pd_sh.values).type(torch.float)
         return albedo, normal, mask, sh, face
@@ -196,3 +293,5 @@ class CelebADataset(Dataset):
 
     def __len__(self):
         return self.dataset_len
+
+
