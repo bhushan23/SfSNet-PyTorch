@@ -45,9 +45,10 @@ def generate_sfsnet_data_csv(dir, save_location):
     mask   = []
     face   = []
     sh     = []
+    name   = []
 
     name_to_list = {'albedo' : albedo, 'normal' : normal, 'depth' : depth, \
-                    'mask' : mask, 'face' : face, 'light' : sh}
+                    'mask' : mask, 'face' : face, 'light' : sh, 'name' : name}
 
     for img in final_images:
         split = img.split('_')
@@ -55,7 +56,11 @@ def generate_sfsnet_data_csv(dir, save_location):
             ext = '.png'
             if k == 'light':
                 ext = '.txt'
-            file_name = split[0] + '/' + split[1] + '_' + k + '_' + '_'.join(split[2:]) + ext
+
+            if k == 'name':
+                filename = split[0] + '_' + split[1] + '_' + k + '_' + '_'.join(split[2:])
+            else:
+                file_name = split[0] + '/' + split[1] + '_' + k + '_' + '_'.join(split[2:]) + ext
             v.append(file_name)
 
     df = pd.DataFrame(data=name_to_list)
@@ -68,9 +73,10 @@ def generate_celeba_synthesize_data_csv(dir, save_location):
     mask   = []
     face   = []
     sh     = []
+    name   = []
 
     name_to_set = {'albedo' : albedo, 'normal' : normal, 'depth' : depth, \
-                    'mask' : mask, 'face' : face, 'light' : sh}
+                    'mask' : mask, 'face' : face, 'light' : sh, 'name' : name}
     
     for img in sorted(glob.glob(dir + '*_albedo*')):
         albedo.append(img)
@@ -82,23 +88,28 @@ def generate_celeba_synthesize_data_csv(dir, save_location):
         face.append(img)
         mask.append('None')
         depth.append('None')
+        iname = img.split('/')[-1].split('.')[0]
+        name.append(iname)
 
     for l in sorted(glob.glob(dir + '*_light*')):
         sh.append(l)
 
     name_to_list = {'albedo' : albedo, 'normal' : normal, 'depth' : depth, \
-                    'mask' : mask, 'face' : face, 'light' : sh}
+                    'mask' : mask, 'face' : face, 'light' : sh, 'name' : name}
 
     df = pd.DataFrame(data=name_to_list)
     df.to_csv(save_location)
 
 def generate_celeba_data_csv(dir, save_location):
     face = []
-    
+    name = []
+
     for img in sorted(glob.glob(dir + '*/all/*.jpg')):
         face.append(img)
+        iname = img.split('/')[-1].split('.')[0]
+        name.append(iname)
 
-    face_to_list = {'face': face}
+    face_to_list = {'face': face, 'name':name}
     df = pd.DataFrame(data=face_to_list)
     df.to_csv(save_location)
 
@@ -240,7 +251,8 @@ def generate_celeba_synthesize(sfs_net_model, dl, train_epoch_num = 0,
         tloss += total_loss.item()
     
     len_dl = len(dl)
-    f = open(filename+'readme.txt', 'w')
+
+    f = open(out_folder + 'readme.txt', 'w')
     f.write('Average Reconstruction Loss: ' + str(tloss / len_dl))
     f.close()
 
