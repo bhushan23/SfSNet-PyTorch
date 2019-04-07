@@ -3,6 +3,8 @@ import torchvision
 from PIL import Image
 
 def applyMask(input_img, mask):
+    if mask is None:
+        return input_img
     return input_img * mask
 
 def denorm(x):
@@ -20,7 +22,7 @@ def get_image_grid(pic, denormalize=True, mask=None):
     ndarr = grid.mul(255).clamp(0, 255).byte().permute(1, 2, 0).cpu().numpy()
     return ndarr
 
-def save_image(pic, denormalize=True, path=None, mask=None):
+def save_image(pic, denormalize=False, path=None, mask=None):
     ndarr = get_image_grid(pic, denormalize=denormalize, mask=mask)    
     
     if path == None:

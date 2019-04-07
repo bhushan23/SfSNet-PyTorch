@@ -174,8 +174,7 @@ def get_sfsnet_dataset(syn_dir=None, read_from_csv=None, read_celeba_csv=None, r
     # Build custom datasets
     transform = transforms.Compose([
                 transforms.Resize(IMAGE_SIZE),
-                transforms.ToTensor(),
-                transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
+                transforms.ToTensor()
             ])
     
     full_dataset = SfSNetDataset(albedo, face, normal, mask, sh, transform)  
@@ -202,9 +201,8 @@ def get_celeba_dataset(dir=None, read_from_csv=None, read_first=None, validation
     # Build custom datasets
     transform = transforms.Compose([
                 transforms.Resize(IMAGE_SIZE),
-                transforms.ToTensor(),
-                transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
-            ])
+                transforms.ToTensor()
+                ])
     
     full_dataset = CelebADataset(face, transform)  
     # TODO: This will vary dataset run-to-run
@@ -274,11 +272,18 @@ class SfSNetDataset(Dataset):
                               transforms.Resize(IMAGE_SIZE),
                               transforms.ToTensor(),
                             ])
+        self.normal_transform = transforms.Compose([
+                              transforms.Resize(IMAGE_SIZE)
+                            ])
 
     def __getitem__(self, index):
         albedo = self.transform(Image.open(self.albedo[index]))
         face   = self.transform(Image.open(self.face[index]))
-        normal = self.transform(Image.open(self.normal[index]))
+        # normal = io.imread(self.face[index]))
+        normal = self.normal_transform(Image.open(self.normal[index]))
+        normal = torch.tensor(np.asarray(normal)).permute([2, 0, 1])
+        normal = normal.type(torch.float)
+        normal = (normal - 128) / 128
         if self.mask[index] == 'None':
             # Load dummy 1 mask for CelebA
             # To ensure consistency if mask is used
@@ -299,7 +304,7 @@ class CelebADataset(Dataset):
         self.dataset_len = len(self.face)
         self.mask_transform = transforms.Compose([
                               transforms.Resize(IMAGE_SIZE),
-                              transforms.ToTensor(),
+                              transforms.ToTensor()
                             ])
 
     def __getitem__(self, index):

@@ -14,7 +14,7 @@ from train import *
 from models import *
 
 def main():
-    ON_SERVER = True
+    ON_SERVER = False
 
     parser = argparse.ArgumentParser(description='SfSNet - Residual')
     parser.add_argument('--batch_size', type=int, default=8, metavar='N',
@@ -63,12 +63,16 @@ def main():
     model_dir  = args.load_model
     read_first = args.read_first
 
+    # Debugging and check working
+    # syn_train_csv = syn_data + '/train.csv'
+    # train_dataset, _ = get_sfsnet_dataset(syn_dir=syn_data+'train/', read_from_csv=syn_train_csv, read_celeba_csv=None, read_first=read_first, validation_split=5)
+    # train_dl  = DataLoader(train_dataset, batch_size=10, shuffle=False)
+    # validate_shading_method(train_dl)
+    # return 
+
     # Init WandB for logging
     wandb.init(project='SfSNet-CelebA-Integrated-Baseline')
     wandb.log({'lr':lr, 'weight decay': wt_decay})
-
-    # Debugging and check working
-    # validate_shading_method(train_dl, wandb)
 
     # Initialize models
     conv_model            = baseFeaturesExtractions()
@@ -117,7 +121,7 @@ def main():
     v_total = generate_celeba_synthesize(sfs_net_model, celeba_train_dl, train_epoch_num=epochs, use_cuda=use_cuda,
                                                             out_folder=out_train_celeba_images_dir, wandb=wandb)
     v_total = generate_celeba_synthesize(sfs_net_model, celeba_test_dl, train_epoch_num=epochs, use_cuda=use_cuda,
-                                                            out_folder=out_train_celeba_images_dir, wandb=wandb)
+                                                            out_folder=out_test_celeba_images_dir, wandb=wandb)
 
     # generate CSV for images generated above
     generate_celeba_synthesize_data_csv(out_train_celeba_images_dir, out_celeba_images_dir + '/train.csv') 

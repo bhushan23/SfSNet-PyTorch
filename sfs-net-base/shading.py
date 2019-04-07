@@ -3,6 +3,8 @@ import torchvision
 import numpy as np
 import torch.nn as nn
 from torch.autograd import Variable
+from torchvision import transforms
+import pandas as pd
 
 from utils import *
 from models import sfsNetShading
@@ -105,15 +107,9 @@ def getShadingFromNormalAndSH(Normal, rSH):
     return outShadingB
 
 
-def validate_shading_method(train_dl, wandb):
+def validate_shading_method(train_dl):
     albedo, normal, mask, sh, face = next(iter(train_dl))
 
-    face_ndarr = get_image_grid(face, mask=mask)
-    wimg = wandb.Image(face_ndarr, caption="Ground Truth Face")
-    wandb.log({'Face Image': wimg})
-
-    normal = denorm(normal)
-    albedo = denorm(albedo)
     shading = getShadingFromNormalAndSH(normal, sh)
     save_image(albedo,  denormalize=False, mask=mask, path='./results/shading_from_normal/albedo.png')
     save_image(normal,  denormalize=False, mask=mask, path='./results/shading_from_normal/normal.png')
