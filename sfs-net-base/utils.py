@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import torchvision
 from PIL import Image
+from torch.nn import *
 
 def applyMask(input_img, mask):
     if mask is None:
@@ -44,7 +45,11 @@ def wandb_log_images(wandb, img, mask, caption, step, log_name, path=None, denor
     wandb.log({log_name: wimg})
 
 def weights_init(m):
-    if isinstance(m, torch.nn.Conv2d) or isinstance(m, torch.nn.Linear):
-        torch.nn.init.xavier_uniform_(m.weight)
+    if isinstance(m, Conv2d) or isinstance(m, Conv1d):
+        init.xavier_uniform_(m.weight)
         if m.bias is not None: 
-            torch.nn.init.xavier_uniform_(m.bias)
+            init.constant(m.bias, 0)
+    elif isinstance(m, Linear):
+        init.normal(m.weight)
+        if m.bias is not None:
+            init.constant(m.bias, 0)
