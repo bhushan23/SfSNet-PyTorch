@@ -48,8 +48,8 @@ def weights_init(m):
     if isinstance(m, Conv2d) or isinstance(m, Conv1d):
         init.xavier_uniform_(m.weight)
         if m.bias is not None: 
-            init.constant(m.bias, 0)
+            init.constant_(m.bias, 0)
     elif isinstance(m, Linear):
-        init.normal(m.weight)
+        init.normal_(m.weight)
         if m.bias is not None:
-            init.constant(m.bias, 0)
+            init.constant_(m.bias, 0)

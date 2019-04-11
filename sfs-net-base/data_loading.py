@@ -289,7 +289,7 @@ class SfSNetDataset(Dataset):
         else:
             mask   = self.mask_transform(Image.open(self.mask[index]))
         pd_sh  = pd.read_csv(self.sh[index], sep='\t', header = None)
-        sh     = torch.tensor(pd_sh.values).type(torch.float)
+        sh     = torch.tensor(pd_sh.values).type(torch.float).reshape(-1)
         return albedo, normal, mask, sh, face
 
     def __len__(self):

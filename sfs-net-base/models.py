@@ -35,7 +35,7 @@ class sfsNetShading(nn.Module):
 
         L = L.type(torch.float)
         sh = torch.split(L, 9, dim=1)
-
+        
         assert(c == len(sh))
         shading = torch.zeros(b, c, h, w)
         
@@ -219,6 +219,11 @@ class SfsNetPipeline(nn.Module):
         self.shading_model         = shading_model
         self.image_recon_model     = image_recon_model
 
+    def get_face(self, sh, normal, albedo):
+        shading = self.shading_model(normal, sh)
+        recon   = self.image_recon_model(shading, albedo)
+        return recon
+
     def forward(self, face):
         # Following is training pipeline
         # 1. Pass Image from Conv Model to extract features
@@ -244,5 +249,5 @@ class SfsNetPipeline(nn.Module):
 
         # 5. Reconstruction of image
         out_recon = self.image_recon_model(out_shading, predicted_albedo)
-                    
+
         return predicted_normal, predicted_albedo, predicted_sh, out_shading, out_recon
