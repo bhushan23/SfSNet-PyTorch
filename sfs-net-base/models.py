@@ -149,8 +149,8 @@ class NormalGenerationNet(nn.Module):
     def __init__(self):
         super(NormalGenerationNet, self).__init__()
         self.upsample = nn.UpsamplingBilinear2d(size=(128, 128), scale_factor=None)
-        self.conv1    = get_conv(128, 64, kernel_size=1, stride=1)
-        self.conv2    = get_conv(64, 64, kernel_size=3, padding=1)
+        self.conv1    = get_conv(128, 128, kernel_size=1, stride=1)
+        self.conv2    = get_conv(128, 64, kernel_size=3, padding=1)
         self.conv3    = nn.Conv2d(64, 3, kernel_size=1)
 
     def forward(self, x):
@@ -166,8 +166,8 @@ class AlbedoGenerationNet(nn.Module):
     def __init__(self):
         super(AlbedoGenerationNet, self).__init__()
         self.upsample = nn.UpsamplingBilinear2d(size=(128, 128), scale_factor=None)
-        self.conv1    = get_conv(128, 64, kernel_size=1, stride=1)
-        self.conv2    = get_conv(64, 64, kernel_size=3, padding=1)
+        self.conv1    = get_conv(128, 128, kernel_size=1, stride=1)
+        self.conv2    = get_conv(128, 64, kernel_size=3, padding=1)
         self.conv3    = nn.Conv2d(64, 3, kernel_size=1)
 
     def forward(self, x):
