@@ -257,8 +257,6 @@ def generate_celeba_synthesize(sfs_net_model, dl, train_epoch_num = 0,
     # return average loss over dataset
     return tloss / len_dl
 
-
-
 class SfSNetDataset(Dataset):
     def __init__(self, albedo, face, normal, mask, sh, transform = None):
         self.albedo = albedo

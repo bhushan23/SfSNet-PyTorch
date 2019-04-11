@@ -165,7 +165,7 @@ def train(sfs_net_model, syn_data, celeba_data=None, read_first=None,
         celeba_test_csv = celeba_data + '/test.csv'
 
     # Load Synthetic dataset
-    train_dataset, val_dataset = get_sfsnet_dataset(syn_dir=syn_data+'train/', read_from_csv=syn_train_csv, read_celeba_csv=celeba_train_csv, read_first=read_first, validation_split=5)
+    train_dataset, val_dataset = get_sfsnet_dataset(syn_dir=syn_data+'train/', read_from_csv=syn_train_csv, read_celeba_csv=celeba_train_csv, read_first=read_first, validation_split=2)
     test_dataset, _ = get_sfsnet_dataset(syn_dir=syn_data+'test/', read_from_csv=syn_test_csv, read_celeba_csv=celeba_test_csv, read_first=100, validation_split=0)
 
     syn_train_dl  = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -241,10 +241,18 @@ def train(sfs_net_model, syn_data, celeba_data=None, read_first=None,
             # Reconstruction loss
             # Edge case: Shading generation requires denormalized normal and sh
             # Hence, denormalizing face here
-            current_recon_loss  = recon_loss(out_recon, denorm(face))
+            current_recon_loss  = recon_loss(out_recon, face)
 
-            total_loss = lamda_recon * current_recon_loss + lamda_normal * current_normal_loss \
+            total_loss = lamda_normal * current_normal_loss \
                             + lamda_albedo * current_albedo_loss + lamda_sh * current_sh_loss
+            if celeba_data is not None:
+                total_loss = lamda_normal * current_normal_loss \
+                            + lamda_albedo * current_albedo_loss + lamda_sh * current_sh_loss
+                total_loss += lamda_recon * current_recon_loss 
+            else:
+                total_loss = current_normal_loss \
+                             + current_albedo_loss + current_sh_loss
+
 
             optimizer.zero_grad()
             total_loss.backward(retain_graph=True)
@@ -271,7 +279,7 @@ def train(sfs_net_model, syn_data, celeba_data=None, read_first=None,
             wandb_log_images(wandb, predicted_normal, mask, 'Train Predicted Normal', epoch, 'Train Predicted Normal', path=file_name + '_predicted_normal.png')
             wandb_log_images(wandb, predicted_albedo, mask, 'Train Predicted Albedo', epoch, 'Train Predicted Albedo', path=file_name + '_predicted_albedo.png')
             wandb_log_images(wandb, out_shading, mask, 'Train Predicted Shading', epoch, 'Train Predicted Shading', path=file_name + '_predicted_shading.png', denormalize=False)
-            wandb_log_images(wandb, out_recon, mask, 'Train Recon', epoch, 'Train Recon', path=file_name + '_predicted_face.png', denormalize=False)
+            wandb_log_images(wandb, out_recon, mask, 'Train Recon', epoch, 'Train Recon', path=file_name + '_predicted_face.png')
             wandb_log_images(wandb, face, mask, 'Train Ground Truth', epoch, 'Train Ground Truth', path=file_name + '_gt_face.png')
             wandb_log_images(wandb, normal, mask, 'Train Ground Truth Normal', epoch, 'Train Ground Truth Normal', path=file_name + '_gt_normal.png')
             wandb_log_images(wandb, albedo, mask, 'Train Ground Truth Albedo', epoch, 'Train Ground Truth Albedo', path=file_name + '_gt_albedo.png')

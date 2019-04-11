@@ -14,7 +14,7 @@ from train import *
 from models import *
 
 def main():
-    ON_SERVER = False
+    ON_SERVER = True
 
     parser = argparse.ArgumentParser(description='SfSNet - Residual')
     parser.add_argument('--batch_size', type=int, default=8, metavar='N',
@@ -29,8 +29,8 @@ def main():
                         help='disables CUDA training')
     parser.add_argument('--seed', type=int, default=1, metavar='S',
                         help='random seed (default: 1)')
-    parser.add_argument('--read_first', type=int, default=10000,
-                        help='read first n rows (default: 10000)')
+    parser.add_argument('--read_first', type=int, default=-1,
+                        help='read first n rows (default: -1)')
     if ON_SERVER:
         parser.add_argument('--syn_data', type=str, default='/nfs/bigdisk/bsonawane/sfsnet_data/',
                         help='Synthetic Dataset path')
@@ -62,6 +62,8 @@ def main():
     epochs     = args.epochs
     model_dir  = args.load_model
     read_first = args.read_first
+    if read_first == -1:
+        read_first = None
 
     # Debugging and check working
     # syn_train_csv = syn_data + '/train.csv'
@@ -71,7 +73,7 @@ def main():
     # return 
 
     # Init WandB for logging
-    wandb.init(project='SfSNet-CelebA-Integrated-Baseline')
+    wandb.init(project='SfSNet-CelebA-Baseline-Exp-1')
     wandb.log({'lr':lr, 'weight decay': wt_decay})
 
     # Initialize models
@@ -92,6 +94,9 @@ def main():
 
     if model_dir is not None:
         sfs_net_model.load_state_dict(torch.load(model_dir + 'sfs_net_model.pkl'))
+    else:
+        print('Initializing weights')
+        sfs_net_model.apply(weights_init)
 
     wandb.watch(sfs_net_model)
     # 1. Train on Synthetic data

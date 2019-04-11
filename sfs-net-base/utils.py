@@ -11,7 +11,7 @@ def denorm(x):
     out = (x + 1) / 2
     return out.clamp(0, 1)
 
-def get_image_grid(pic, denormalize=True, mask=None):
+def get_image_grid(pic, denormalize=False, mask=None):
     if denormalize:
         pic = denorm(pic)
     
@@ -32,7 +32,7 @@ def save_image(pic, denormalize=False, path=None, mask=None):
         im = Image.fromarray(ndarr)
         im.save(path)
 
-def wandb_log_images(wandb, img, mask, caption, step, log_name, path=None, denormalize=True):
+def wandb_log_images(wandb, img, mask, caption, step, log_name, path=None, denormalize=False):
     ndarr = get_image_grid(img, denormalize=denormalize, mask=mask)
 
     # save image if path is provided
@@ -42,3 +42,9 @@ def wandb_log_images(wandb, img, mask, caption, step, log_name, path=None, denor
 
     wimg = wandb.Image(ndarr, caption=caption)
     wandb.log({log_name: wimg})
+
+def weights_init(m):
+    if isinstance(m, torch.nn.Conv2d) or isinstance(m, torch.nn.Linear):
+        torch.nn.init.xavier_uniform_(m.weight)
+        if m.bias is not None: 
+            torch.nn.init.xavier_uniform_(m.bias)

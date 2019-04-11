@@ -240,9 +240,9 @@ class SfsNetPipeline(nn.Module):
         predicted_sh = self.light_estimator_model(all_features)
 
         # 4. Generate shading
-        out_shading = self.shading_model(denorm(predicted_normal), predicted_sh)
+        out_shading = self.shading_model(predicted_normal, predicted_sh)
 
         # 5. Reconstruction of image
-        out_recon = self.image_recon_model(out_shading, denorm(predicted_albedo))
+        out_recon = self.image_recon_model(out_shading, predicted_albedo)
                     
         return predicted_normal, predicted_albedo, predicted_sh, out_shading, out_recon
