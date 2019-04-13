@@ -122,6 +122,9 @@ def predict_sfsnet(sfs_net_model, dl, train_epoch_num = 0,
             # Get face with real SH
             real_sh_face = sfs_net_model.get_face(sh, predicted_normal, predicted_albedo)
             wandb_log_images(wandb, real_sh_face, mask, 'Val Real SH Predicted Face', train_epoch_num, 'Val Real SH Predicted Face', path=file_name + '_real_sh_face.png')
+            syn_face     = sfs_net_model.get_face(sh, normal, albedo)
+            wandb_log_images(wandb, syn_face, mask, 'Val Real SH GT Face', train_epoch_num, 'Val Real SH GT Face', path=file_name + '_syn_gt_face.png')
+
             # TODO:
             # Dump SH as CSV or TXT file
         
@@ -232,8 +235,6 @@ def train(sfs_net_model, syn_data, celeba_data=None, read_first=None,
             # face = applyMask(face, mask)
             predicted_normal, predicted_albedo, predicted_sh, out_shading, out_recon = sfs_net_model(face)
             
-            # Get face with real_sh, predicted normal and albedo for debugging
-            real_sh_face = sfs_net_model.get_face(sh, predicted_normal, predicted_albedo)
 
             # Loss computation
             # Normal loss
@@ -287,7 +288,11 @@ def train(sfs_net_model, syn_data, celeba_data=None, read_first=None,
             wandb_log_images(wandb, face, mask, 'Train Ground Truth', epoch, 'Train Ground Truth', path=file_name + '_gt_face.png')
             wandb_log_images(wandb, normal, mask, 'Train Ground Truth Normal', epoch, 'Train Ground Truth Normal', path=file_name + '_gt_normal.png')
             wandb_log_images(wandb, albedo, mask, 'Train Ground Truth Albedo', epoch, 'Train Ground Truth Albedo', path=file_name + '_gt_albedo.png')
+            # Get face with real_sh, predicted normal and albedo for debugging
+            real_sh_face = sfs_net_model.get_face(sh, predicted_normal, predicted_albedo)
+            syn_face     = sfs_net_model.get_face(sh, normal, albedo)
             wandb_log_images(wandb, real_sh_face, mask, 'Train Real SH Predicted Face', epoch, 'Train Real SH Predicted Face', path=file_name + '_real_sh_face.png')
+            wandb_log_images(wandb, syn_face, mask, 'Train Real SH GT Face', epoch, 'Train Real SH GT Face', path=file_name + '_syn_gt_face.png')
 
             v_total, v_normal, v_albedo, v_sh, v_recon = predict_sfsnet(sfs_net_model, syn_val_dl, train_epoch_num=epoch, use_cuda=use_cuda,
                                                                          out_folder=out_syn_images_dir+'/val/', wandb=wandb)

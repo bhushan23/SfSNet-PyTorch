@@ -63,7 +63,7 @@ def get_conv(in_channels, out_channels, kernel_size=3, padding=0, stride=1, drop
         nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, stride=stride, 
                     padding=padding, bias=False),
         nn.BatchNorm2d(out_channels),
-        nn.LeakyReLU(dropout),
+        nn.ReLU(inplace=True),
         nn.Dropout(dropout)
     )
 
@@ -148,7 +148,8 @@ class NormalGenerationNet(nn.Module):
     """
     def __init__(self):
         super(NormalGenerationNet, self).__init__()
-        self.upsample = nn.UpsamplingBilinear2d(size=(128, 128), scale_factor=None)
+        # self.upsample = nn.UpsamplingBilinear2d(size=(128, 128), scale_factor=2)
+        self.upsample = nn.Upsample(scale_factor=2, mode='bilinear')
         self.conv1    = get_conv(128, 128, kernel_size=1, stride=1)
         self.conv2    = get_conv(128, 64, kernel_size=3, padding=1)
         self.conv3    = nn.Conv2d(64, 3, kernel_size=1)
@@ -165,7 +166,8 @@ class AlbedoGenerationNet(nn.Module):
     """
     def __init__(self):
         super(AlbedoGenerationNet, self).__init__()
-        self.upsample = nn.UpsamplingBilinear2d(size=(128, 128), scale_factor=None)
+        # self.upsample = nn.UpsamplingBilinear2d(size=(128, 128), scale_factor=2)
+        self.upsample = nn.Upsample(scale_factor=2, mode='bilinear')
         self.conv1    = get_conv(128, 128, kernel_size=1, stride=1)
         self.conv2    = get_conv(128, 64, kernel_size=3, padding=1)
         self.conv3    = nn.Conv2d(64, 3, kernel_size=1)
