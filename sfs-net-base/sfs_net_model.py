@@ -186,6 +186,7 @@ class SfSNet(nn.Module):
 
 class SfSNet_Base_Pipeline(nn.Module):
   def __init__(self, shading_model, image_recon_model):
+    super(SfSNet_Base_Pipeline, self).__init__()
     self.shading_model = shading_model
     self.image_recon_model = image_recon_model
     self.model = SfSNet()
