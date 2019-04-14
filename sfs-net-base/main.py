@@ -1,3 +1,10 @@
+#
+# Experiment Entry point
+# 1. Trains model on Syn Data
+# 2. Generates CelebA Data
+# 3. Trains on Syn + CelebA Data
+#
+
 import torch
 import torchvision
 from torchvision import transforms

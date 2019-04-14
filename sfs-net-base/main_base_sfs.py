@@ -1,3 +1,7 @@
+##
+##  To Run SFS NET Model Provided by Author
+##
+
 import torch
 import torchvision
 from torchvision import transforms
