@@ -38,6 +38,8 @@ def main():
                         help='random seed (default: 1)')
     parser.add_argument('--read_first', type=int, default=-1,
                         help='read first n rows (default: -1)')
+    parser.add_argument('--details', type=str, default=None,
+                        help='Explaination of the run')
     if ON_SERVER:
         parser.add_argument('--syn_data', type=str, default='/nfs/bigdisk/bsonawane/sfsnet_data/',
                         help='Synthetic Dataset path')
@@ -69,6 +71,8 @@ def main():
     epochs     = args.epochs
     model_dir  = args.load_model
     read_first = args.read_first
+
+    
     if read_first == -1:
         read_first = None
 
@@ -104,6 +108,10 @@ def main():
     else:
         print('Initializing weights')
         sfs_net_model.apply(weights_init)
+
+    os.system('mkdir -p {}'.format(args.log_dir))
+    with open(args.log_dir+'/details.txt', 'w') as f:
+        f.write(args.details)
 
     wandb.watch(sfs_net_model)
     # 1. Train on Synthetic data
