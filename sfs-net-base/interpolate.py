@@ -25,6 +25,8 @@ def interpolate(model_dir, input_path, output_path):
   img_dataset = torchvision.datasets.ImageFolder(input_path, transform=transform)
   dl          = DataLoader(img_dataset, batch_size=1)
 
+  print('Data size:', len(dl))
+
   # Load model
   conv_model            = baseFeaturesExtractions()
   normal_residual_model = NormalResidualBlock()
@@ -50,6 +52,8 @@ def interpolate(model_dir, input_path, output_path):
     normal, albedo, sh, shading, recon = sfs_net_model(data)
     output_dir = output_path + str(bix)
 
+    normal = normal * 128 + 128
+    normal = normal.clamp(0, 255) / 255
     save_image(data, path=output_dir+'_face.png')
     save_image(normal, path=output_dir+'_normal.png')
     save_image(albedo, path=output_dir+'_albedo.png')

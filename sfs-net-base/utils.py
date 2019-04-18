@@ -12,6 +12,11 @@ def denorm(x):
     out = (x + 1) / 2
     return out.clamp(0, 1)
 
+def get_normal_in_range(normal):
+    new_normal = normal * 128 + 128
+    new_normal = new_normal.clamp(0, 255) / 255
+    return new_normal
+
 def get_image_grid(pic, denormalize=False, mask=None):
     if denormalize:
         pic = denorm(pic)
