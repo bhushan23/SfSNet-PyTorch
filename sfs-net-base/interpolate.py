@@ -66,7 +66,7 @@ def interpolate(model_dir, input_path, output_path):
 def main():
     parser = argparse.ArgumentParser(description='SfSNet - Interpolation')
 
-    parser.add_argument('--data', type=str, default='../data/interpolation-input/',
+    parser.add_argument('--data', type=str, default='../data/interpolation-input/faces/',
                         help='interpolation input')
     parser.add_argument('--load_model', type=str, default=None,
                         help='load model from')
@@ -79,9 +79,9 @@ def main():
     output_dir = args.output_dir
 
     # load Synthetic trained model only
-    model_path = model_dir + 'Synthetic_Train/checkpoints/'
-    output_dir_syn = output_dir + '/Synthetic_Train_Interpolation/'
-    interpolate(model_path, data_dir, output_dir_syn)
+    # model_path = model_dir + 'Synthetic_Train/checkpoints/'
+    # output_dir_syn = output_dir + '/Synthetic_Train_Interpolation/'
+    # interpolate(model_path, data_dir, output_dir_syn)
 
     # load Mix Data trained model
     model_path = model_dir + 'Mix_Training/checkpoints/'
