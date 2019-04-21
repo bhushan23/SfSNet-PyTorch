@@ -184,8 +184,8 @@ class LightEstimator(nn.Module):
     """
     def __init__(self):
         super(LightEstimator, self).__init__()
-        self.conv1 = nn.Conv2d(384, 128, kernel_size=1)
-        self.pool  = nn.AvgPool2d(64) 
+        self.conv1 = get_conv(384, 128, kernel_size=1, stride=1)
+        self.pool  = nn.AvgPool2d(64, stride=1,padding=0) 
         self.fc    = nn.Linear(128, 27)
 
     def forward(self, x):
