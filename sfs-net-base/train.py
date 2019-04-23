@@ -196,7 +196,7 @@ def train(sfs_net_model, syn_data, celeba_data=None, read_first=None,
     optimizer = torch.optim.Adam(model_parameters, lr=lr, weight_decay=wt_decay)
     normal_loss = nn.L1Loss()
     albedo_loss = nn.L1Loss()
-    sh_loss     = nn.MSELoss()
+    sh_loss     = nn.MSELoss(reduction='sum')
     recon_loss  = nn.L1Loss() 
 
     if use_cuda:
@@ -251,18 +251,10 @@ def train(sfs_net_model, syn_data, celeba_data=None, read_first=None,
             current_recon_loss  = recon_loss(out_recon, face)
 
             total_loss = lamda_normal * current_normal_loss \
-                            + lamda_albedo * current_albedo_loss + lamda_sh * current_sh_loss
-
-            if celeba_data is not None:
-                total_loss = lamda_normal * current_normal_loss \
-                            + lamda_albedo * current_albedo_loss + lamda_sh * current_sh_loss
-                total_loss += lamda_recon * current_recon_loss 
-            else:
-                total_loss = current_normal_loss \
-                             + current_albedo_loss + current_sh_loss
+                           + lamda_albedo * current_albedo_loss + lamda_sh * current_sh_loss + lamda_recon * current_recon_loss 
 
             optimizer.zero_grad()
-            total_loss.backward(retain_graph=True)
+            total_loss.backward()
             optimizer.step()
 
             # Logging for display and debugging purposes
