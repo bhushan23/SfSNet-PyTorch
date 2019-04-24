@@ -75,9 +75,6 @@ def generate_celeba_synthesize_data_csv(dir, save_location):
     sh     = []
     name   = []
 
-    name_to_set = {'albedo' : albedo, 'normal' : normal, 'depth' : depth, \
-                    'mask' : mask, 'face' : face, 'light' : sh, 'name' : name}
-    
     for img in sorted(glob.glob(dir + '*_albedo*')):
         albedo.append(img)
     
@@ -99,6 +96,7 @@ def generate_celeba_synthesize_data_csv(dir, save_location):
 
     df = pd.DataFrame(data=name_to_list)
     df.to_csv(save_location)
+    print('saved')
 
 def generate_celeba_data_csv(dir, save_location):
     face = []

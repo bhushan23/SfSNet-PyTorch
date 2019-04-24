@@ -21,7 +21,7 @@ from train import *
 from models import *
 
 def main():
-    ON_SERVER = True
+    ON_SERVER = False
 
     parser = argparse.ArgumentParser(description='SfSNet - Residual')
     parser.add_argument('--batch_size', type=int, default=8, metavar='N',
@@ -50,7 +50,7 @@ def main():
     else:  
         parser.add_argument('--syn_data', type=str, default='../data/sfs-net/',
                         help='Synthetic Dataset path')
-        parser.add_argument('--celeba_data', type=str, default='../data/celeba/',
+        parser.add_argument('--celeba_data', type=str, default='../data/celeba_20k/',
                         help='CelebA Dataset path')
         parser.add_argument('--log_dir', type=str, default='./results/',
                         help='Log Path')
@@ -88,18 +88,7 @@ def main():
     wandb.log({'lr':lr, 'weight decay': wt_decay})
 
     # Initialize models
-    conv_model            = baseFeaturesExtractions()
-    normal_residual_model = NormalResidualBlock()
-    albedo_residual_model = AlbedoResidualBlock()
-    light_estimator_model = LightEstimator()
-    normal_gen_model      = NormalGenerationNet()
-    albedo_gen_model      = AlbedoGenerationNet()
-    shading_model         = sfsNetShading()
-    image_recon_model     = ReconstructImage()
-    
-    sfs_net_model      = SfsNetPipeline(conv_model, normal_residual_model, albedo_residual_model, \
-                                            light_estimator_model, normal_gen_model, albedo_gen_model, \
-                                            shading_model, image_recon_model)
+    sfs_net_model      = SfsNetPipeline()
     if use_cuda:
         sfs_net_model = sfs_net_model.cuda()
 
