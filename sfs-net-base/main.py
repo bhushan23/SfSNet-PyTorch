@@ -21,7 +21,7 @@ from train import *
 from models import *
 
 def main():
-    ON_SERVER = True
+    ON_SERVER = False
 
     parser = argparse.ArgumentParser(description='SfSNet - Residual')
     parser.add_argument('--batch_size', type=int, default=8, metavar='N',
@@ -50,7 +50,7 @@ def main():
     else:  
         parser.add_argument('--syn_data', type=str, default='../data/sfs-net/',
                         help='Synthetic Dataset path')
-        parser.add_argument('--celeba_data', type=str, default='../data/celeba/',
+        parser.add_argument('--celeba_data', type=str, default='../data/celeba_20k/',
                         help='CelebA Dataset path')
         parser.add_argument('--log_dir', type=str, default='./results/',
                         help='Log Path')
@@ -84,22 +84,11 @@ def main():
     # return 
 
     # Init WandB for logging
-    wandb.init(project='SfSNet-CelebA-Baseline-Exp-1')
+    wandb.init(project='SfSNet-CelebA-Baseline-V2')
     wandb.log({'lr':lr, 'weight decay': wt_decay})
 
     # Initialize models
-    conv_model            = baseFeaturesExtractions()
-    normal_residual_model = NormalResidualBlock()
-    albedo_residual_model = AlbedoResidualBlock()
-    light_estimator_model = LightEstimator()
-    normal_gen_model      = NormalGenerationNet()
-    albedo_gen_model      = AlbedoGenerationNet()
-    shading_model         = sfsNetShading()
-    image_recon_model     = ReconstructImage()
-    
-    sfs_net_model      = SfsNetPipeline(conv_model, normal_residual_model, albedo_residual_model, \
-                                            light_estimator_model, normal_gen_model, albedo_gen_model, \
-                                            shading_model, image_recon_model)
+    sfs_net_model      = SfsNetPipeline()
     if use_cuda:
         sfs_net_model = sfs_net_model.cuda()
 
@@ -114,6 +103,7 @@ def main():
         f.write(args.details)
 
     wandb.watch(sfs_net_model)
+
     # 1. Train on Synthetic data
     train(sfs_net_model, syn_data, celeba_data = None, read_first=read_first, \
             batch_size=batch_size, num_epochs=epochs, log_path=log_dir+'Synthetic_Train/', use_cuda=use_cuda, wandb=wandb, \
@@ -130,7 +120,7 @@ def main():
     celeba_train_dl  = DataLoader(train_dataset, batch_size=1, shuffle=True)
     celeba_test_dl   = DataLoader(test_dataset, batch_size=1, shuffle=True)
     
-    out_celeba_images_dir = celeba_data + 'synthesized_data/'
+    out_celeba_images_dir = celeba_data + 'synthesized_data_v2/'
     out_train_celeba_images_dir = out_celeba_images_dir + 'train/'
     out_test_celeba_images_dir = out_celeba_images_dir + 'test/'
 
@@ -146,12 +136,11 @@ def main():
     # generate CSV for images generated above
     generate_celeba_synthesize_data_csv(out_train_celeba_images_dir, out_celeba_images_dir + '/train.csv') 
     generate_celeba_synthesize_data_csv(out_test_celeba_images_dir, out_celeba_images_dir + '/test.csv') 
-            
+        
     # 3. Train on both Synthetic and Real (Celeba) dataset
     train(sfs_net_model, syn_data, celeba_data=out_celeba_images_dir, read_first=read_first,\
             batch_size=batch_size, num_epochs=epochs, log_path=log_dir+'Mix_Training/', use_cuda=use_cuda, wandb=wandb, \
             lr=lr, wt_decay=wt_decay)
     
-
 if __name__ == '__main__':
     main()
