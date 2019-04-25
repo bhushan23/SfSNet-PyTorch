@@ -1,0 +1,11 @@
+,albedo,normal,depth,mask,face,light,name
+0,../data/celeba_20k/test/0_albedo.png,../data/celeba_20k/test/0_normal.png,None,None,../data/celeba_20k/test/0_face.png,../data/celeba_20k/test/0_light.txt,0_face
+1,../data/celeba_20k/test/1_albedo.png,../data/celeba_20k/test/1_normal.png,None,None,../data/celeba_20k/test/1_face.png,../data/celeba_20k/test/1_light.txt,1_face
+2,../data/celeba_20k/test/2_albedo.png,../data/celeba_20k/test/2_normal.png,None,None,../data/celeba_20k/test/2_face.png,../data/celeba_20k/test/2_light.txt,2_face
+3,../data/celeba_20k/test/3_albedo.png,../data/celeba_20k/test/3_normal.png,None,None,../data/celeba_20k/test/3_face.png,../data/celeba_20k/test/3_light.txt,3_face
+4,../data/celeba_20k/test/4_albedo.png,../data/celeba_20k/test/4_normal.png,None,None,../data/celeba_20k/test/4_face.png,../data/celeba_20k/test/4_light.txt,4_face
+5,../data/celeba_20k/test/5_albedo.png,../data/celeba_20k/test/5_normal.png,None,None,../data/celeba_20k/test/5_face.png,../data/celeba_20k/test/5_light.txt,5_face
+6,../data/celeba_20k/test/6_albedo.png,../data/celeba_20k/test/6_normal.png,None,None,../data/celeba_20k/test/6_face.png,../data/celeba_20k/test/6_light.txt,6_face
+7,../data/celeba_20k/test/7_albedo.png,../data/celeba_20k/test/7_normal.png,None,None,../data/celeba_20k/test/7_face.png,../data/celeba_20k/test/7_light.txt,7_face
+8,../data/celeba_20k/test/8_albedo.png,../data/celeba_20k/test/8_normal.png,None,None,../data/celeba_20k/test/8_face.png,../data/celeba_20k/test/8_light.txt,8_face
+9,../data/celeba_20k/test/9_albedo.png,../data/celeba_20k/test/9_normal.png,None,None,../data/celeba_20k/test/9_face.png,../data/celeba_20k/test/9_light.txt,9_face
