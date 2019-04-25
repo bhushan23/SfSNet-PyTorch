@@ -88,7 +88,7 @@ def main():
     # return 
 
     # Init WandB for logging
-    wandb.init(project='SfSNet-CelebA-Baseline-V2 - PreTrained')
+    wandb.init(project='SfSNet-CelebA-Baseline-V2-PreTrained')
     wandb.log({'lr':lr, 'weight decay': wt_decay})
 
     # Initialize models
@@ -103,7 +103,8 @@ def main():
         sfs_net_pretrained_dict = torch.load(pretrained_model_dict)
         sfs_net_state_dict = sfs_net_model.state_dict()
         load_model_from_pretrained(sfs_net_pretrained_dict, sfs_net_state_dict)
-        sfs_net_model.load_state_dict(sfs_net_pretrained_dict)
+        sfs_net_model.load_state_dict(sfs_net_state_dict)
+        torch.save(sfs_net_model.state_dict(), log_dir + 'Mix_Training/checkpoints/' + 'sfs_net_model.pkl')
 
     os.system('mkdir -p {}'.format(args.log_dir))
     with open(args.log_dir+'/details.txt', 'w') as f:

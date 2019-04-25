@@ -28,18 +28,8 @@ def interpolate(model_dir, input_path, output_path):
   print('Data size:', len(dl))
 
   # Load model
-  conv_model            = baseFeaturesExtractions()
-  normal_residual_model = NormalResidualBlock()
-  albedo_residual_model = AlbedoResidualBlock()
-  light_estimator_model = LightEstimator()
-  normal_gen_model      = NormalGenerationNet()
-  albedo_gen_model      = AlbedoGenerationNet()
-  shading_model         = sfsNetShading()
-  image_recon_model     = ReconstructImage()
-  
-  sfs_net_model         = SfsNetPipeline(conv_model, normal_residual_model, albedo_residual_model, \
-                                          light_estimator_model, normal_gen_model, albedo_gen_model, \
-                                          shading_model, image_recon_model)
+ 
+  sfs_net_model         = SfsNetPipeline()
   if use_cuda:
       sfs_net_model = sfs_net_model.cuda()
   
@@ -52,8 +42,8 @@ def interpolate(model_dir, input_path, output_path):
     normal, albedo, sh, shading, recon = sfs_net_model(data)
     output_dir = output_path + str(bix)
 
-    normal = normal * 128 + 128
-    normal = normal.clamp(0, 255) / 255
+    # normal = normal * 128 + 128
+    # normal = normal.clamp(0, 255) / 255
     save_image(data, path=output_dir+'_face.png')
     save_image(normal, path=output_dir+'_normal.png')
     save_image(albedo, path=output_dir+'_albedo.png')

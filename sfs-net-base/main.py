@@ -21,7 +21,7 @@ from train import *
 from models import *
 
 def main():
-    ON_SERVER = False
+    ON_SERVER = True
 
     parser = argparse.ArgumentParser(description='SfSNet - Residual')
     parser.add_argument('--batch_size', type=int, default=8, metavar='N',
