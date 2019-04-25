@@ -294,6 +294,22 @@ class SfsNetPipeline(nn.Module):
 
         return predicted_normal, predicted_albedo, predicted_sh, out_shading, out_recon
 
+    def fix_weights(self):
+        dfs_freeze(self.conv_model)
+        dfs_freeze(self.normal_residual_model)
+        dfs_freeze(self.normal_gen_model)
+        dfs_freeze(self.albedo_residual_model)
+        dfs_freeze(self.light_estimator_model)
+        # Note that we are not freezing Albedo gen model
+
+# Use following to fix weights of the model
+# Ref - https://discuss.pytorch.org/t/how-the-pytorch-freeze-network-in-some-layers-only-the-rest-of-the-training/7088/15
+def dfs_freeze(model):
+    for name, child in model.named_children():
+        for param in child.parameters():
+            param.requires_grad = False
+        dfs_freeze(child)
+
 
 # Following method loads author provided model weights
 # Refer to model_loading_synchronization to getf following mapping
