@@ -160,7 +160,7 @@ def predict_sfsnet(sfs_net_model, dl, train_epoch_num = 0,
 
 def train(sfs_net_model, syn_data, celeba_data=None, read_first=None,
           batch_size = 10, num_epochs = 10, log_path = './results/metadata/', use_cuda=False, wandb=None,
-          lr = 0.01, wt_decay=0.005):
+          lr = 0.01, wt_decay=0.005, training_syn=False):
 
     # data processing
     syn_train_csv = syn_data + '/train.csv'
@@ -168,20 +168,25 @@ def train(sfs_net_model, syn_data, celeba_data=None, read_first=None,
     
     celeba_train_csv = None
     celeba_test_csv = None
+    val_celeba_dl = None
     if celeba_data is not None:
         celeba_train_csv = celeba_data + '/train.csv'
         celeba_test_csv = celeba_data + '/test.csv'
-
+        
+        if training_syn:
+            celeba_dt, _ = get_celeba_dataset(read_from_csv=celeba_train_csv, read_first=batch_size, validation_split=0)
+            val_celeba_dl = DataLoader(celeba_dt, batch_size=batch_size, shuffle=True)
+    
     # Load Synthetic dataset
-    train_dataset, val_dataset = get_sfsnet_dataset(syn_dir=syn_data+'train/', read_from_csv=syn_train_csv, read_celeba_csv=celeba_train_csv, read_first=read_first, validation_split=2)
-    test_dataset, _ = get_sfsnet_dataset(syn_dir=syn_data+'test/', read_from_csv=syn_test_csv, read_celeba_csv=celeba_test_csv, read_first=100, validation_split=0)
+    train_dataset, val_dataset = get_sfsnet_dataset(syn_dir=syn_data+'train/', read_from_csv=syn_train_csv, read_celeba_csv=celeba_train_csv, read_first=read_first, validation_split=2, training_syn = training_syn)
+    test_dataset, _ = get_sfsnet_dataset(syn_dir=syn_data+'test/', read_from_csv=syn_test_csv, read_celeba_csv=celeba_test_csv, read_first=100, validation_split=0, training_syn = training_syn)
 
     syn_train_dl  = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     syn_val_dl    = DataLoader(val_dataset, batch_size=batch_size, shuffle=True)
     syn_test_dl   = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
 
     print('Synthetic dataset: Train data: ', len(syn_train_dl), ' Val data: ', len(syn_val_dl), ' Test data: ', len(syn_test_dl))
-
+    
     model_checkpoint_dir = log_path + 'checkpoints/'
     out_images_dir       = log_path + 'out_images/'
     out_syn_images_dir   = out_images_dir
@@ -190,6 +195,9 @@ def train(sfs_net_model, syn_data, celeba_data=None, read_first=None,
     os.system('mkdir -p {}'.format(out_syn_images_dir + 'train/'))
     os.system('mkdir -p {}'.format(out_syn_images_dir + 'val/'))
     os.system('mkdir -p {}'.format(out_syn_images_dir + 'test/'))
+    if val_celeba_dl is not None:
+        os.system('mkdir -p {}'.format(out_syn_images_dir + 'celeba_val/'))
+        
 
     # Collect model parameters
     model_parameters = sfs_net_model.parameters()
@@ -299,10 +307,12 @@ def train(sfs_net_model, syn_data, celeba_data=None, read_first=None,
             wandb.log({log_prefix + 'Val Total loss': v_total, log_prefix + 'Val Albedo loss': v_albedo, log_prefix + 'Val Normal loss': v_normal, \
                         log_prefix + 'Val SH loss': v_sh, log_prefix + 'Val Recon loss': v_recon})
             
-
             print('Val set results: Total Loss: {}, Normal Loss: {}, Albedo Loss: {}, SH Loss: {}, Recon Loss: {}'.format(v_total,
                     v_normal, v_albedo, v_sh, v_recon))
-            
+
+            predict_celeba(sfs_net_model, val_celeba_dl, train_epoch_num = 0,
+                    use_cuda = use_cuda, out_folder = out_syn_images_dir + 'celeba_val/', wandb = wandb, dump_all_images = True)
+ 
             # Model saving
             torch.save(sfs_net_model.state_dict(), model_checkpoint_dir + 'sfs_net_model.pkl')
         if epoch % 5 == 0:

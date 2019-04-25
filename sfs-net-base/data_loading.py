@@ -111,7 +111,7 @@ def generate_celeba_data_csv(dir, save_location):
     df = pd.DataFrame(data=face_to_list)
     df.to_csv(save_location)
 
-def get_sfsnet_dataset(syn_dir=None, read_from_csv=None, read_celeba_csv=None, read_first=None, validation_split=0):
+def get_sfsnet_dataset(syn_dir=None, read_from_csv=None, read_celeba_csv=None, read_first=None, validation_split=0, training_syn=False):
     albedo  = []
     sh      = []
     mask    = []
@@ -119,6 +119,8 @@ def get_sfsnet_dataset(syn_dir=None, read_from_csv=None, read_celeba_csv=None, r
     face    = []
     depth   = []
 
+    if training_syn:
+        read_celeba_csv = None
     if read_from_csv is None:
         for img in sorted(glob.glob(syn_dir + '*/*_albedo_*')):
             albedo.append(img)
@@ -230,7 +232,7 @@ def generate_celeba_synthesize(sfs_net_model, dl, train_epoch_num = 0,
         predicted_normal, predicted_albedo, predicted_sh, predicted_shading, predicted_face = sfs_net_model(face)
         
         # save predictions in log folder
-        file_name = out_folder + str(train_epoch_num) + '_' + str(bix)
+        file_name = out_folder + str(trasyn_val_dlin_epoch_num) + '_' + str(bix)
         # log images
         save_image(predicted_normal, path = file_name+'_normal.png')
         save_image(predicted_albedo, path = file_name+'_albedo.png')

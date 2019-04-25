@@ -21,7 +21,7 @@ from train import *
 from models import *
 
 def main():
-    ON_SERVER = True
+    ON_SERVER = False
 
     parser = argparse.ArgumentParser(description='SfSNet - Residual')
     parser.add_argument('--batch_size', type=int, default=8, metavar='N',
@@ -50,7 +50,7 @@ def main():
     else:  
         parser.add_argument('--syn_data', type=str, default='../data/sfs-net/',
                         help='Synthetic Dataset path')
-        parser.add_argument('--celeba_data', type=str, default='../data/celeba_20k/',
+        parser.add_argument('--celeba_data', type=str, default='../data/celeba/',
                         help='CelebA Dataset path')
         parser.add_argument('--log_dir', type=str, default='./results/',
                         help='Log Path')
@@ -84,30 +84,30 @@ def main():
     # return 
 
     # Init WandB for logging
-    wandb.init(project='SfSNet-CelebA-Baseline-V2')
+    wandb.init(project='SfSNet-CelebA-Baseline-V3-SkipNetBased')
     wandb.log({'lr':lr, 'weight decay': wt_decay})
 
     # Initialize models
-    sfs_net_model      = SfsNetPipeline()
+    skipnet_model      = SkipNet()
     if use_cuda:
-        sfs_net_model = sfs_net_model.cuda()
+        skipnet_model = skipnet_model.cuda()
 
     if model_dir is not None:
-        sfs_net_model.load_state_dict(torch.load(model_dir + 'sfs_net_model.pkl'))
+        skipnet_model.load_state_dict(torch.load(model_dir + 'skipnet_model.pkl'))
     else:
         print('Initializing weights')
-        sfs_net_model.apply(weights_init)
+        skipnet_model.apply(weights_init)
 
     os.system('mkdir -p {}'.format(args.log_dir))
     with open(args.log_dir+'/details.txt', 'w') as f:
         f.write(args.details)
 
-    wandb.watch(sfs_net_model)
+    wandb.watch(skipnet_model)
 
     # 1. Train on Synthetic data
-    train(sfs_net_model, syn_data, celeba_data = None, read_first=read_first, \
+    train(skipnet_model, syn_data, celeba_data = celeba_data, read_first=read_first, \
             batch_size=batch_size, num_epochs=epochs, log_path=log_dir+'Synthetic_Train/', use_cuda=use_cuda, wandb=wandb, \
-            lr=lr, wt_decay=wt_decay)
+            lr=lr, wt_decay=wt_decay, training_syn=True)
     
     # 2. Generate Pseudo-Training information for CelebA dataset
     # Load CelebA dataset
@@ -120,17 +120,18 @@ def main():
     celeba_train_dl  = DataLoader(train_dataset, batch_size=1, shuffle=True)
     celeba_test_dl   = DataLoader(test_dataset, batch_size=1, shuffle=True)
     
-    out_celeba_images_dir = celeba_data + 'synthesized_data_v2/'
+    out_celeba_images_dir = celeba_data + 'synthesized_data_skip_net/'
     out_train_celeba_images_dir = out_celeba_images_dir + 'train/'
     out_test_celeba_images_dir = out_celeba_images_dir + 'test/'
 
     os.system('mkdir -p {}'.format(out_train_celeba_images_dir))
     os.system('mkdir -p {}'.format(out_test_celeba_images_dir))
 
+    
     # Dump normal, albedo, shading, face and sh for celeba dataset
-    v_total = generate_celeba_synthesize(sfs_net_model, celeba_train_dl, train_epoch_num=epochs, use_cuda=use_cuda,
+    v_total = generate_celeba_synthesize(skipnet_model, celeba_train_dl, train_epoch_num=epochs, use_cuda=use_cuda,
                                                             out_folder=out_train_celeba_images_dir, wandb=wandb)
-    v_total = generate_celeba_synthesize(sfs_net_model, celeba_test_dl, train_epoch_num=epochs, use_cuda=use_cuda,
+    v_total = generate_celeba_synthesize(skipnet_model, celeba_test_dl, train_epoch_num=epochs, use_cuda=use_cuda,
                                                             out_folder=out_test_celeba_images_dir, wandb=wandb)
 
     # generate CSV for images generated above
@@ -138,7 +139,16 @@ def main():
     generate_celeba_synthesize_data_csv(out_test_celeba_images_dir, out_celeba_images_dir + '/test.csv') 
         
     # 3. Train on both Synthetic and Real (Celeba) dataset
-    train(sfs_net_model, syn_data, celeba_data=out_celeba_images_dir, read_first=read_first,\
+    sfsnet_model      = SfsNetPipeline()
+    if use_cuda:
+        sfsnet_model = sfsnet_model.cuda()
+
+    if model_dir is not None:
+        sfsnet_model.load_state_dict(torch.load(model_dir + 'sfsnet_model.pkl'))
+    else:
+        print('Initializing weights')
+        skipnet_model.apply(weights_init)
+    train(sfsnet_model, syn_data, celeba_data=out_celeba_images_dir, read_first=read_first,\
             batch_size=batch_size, num_epochs=epochs, log_path=log_dir+'Mix_Training/', use_cuda=use_cuda, wandb=wandb, \
             lr=lr, wt_decay=wt_decay)
     
