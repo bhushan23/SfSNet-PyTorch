@@ -11,7 +11,7 @@ from skimage import io
 from PIL import Image
 import pandas as pd
 
-from utils import save_image
+from utils import save_image, get_normal_in_range
 import numpy as np
 IMAGE_SIZE = 128
 
@@ -234,6 +234,7 @@ def generate_celeba_synthesize(sfs_net_model, dl, train_epoch_num = 0,
         # save predictions in log folder
         file_name = out_folder + str(train_epoch_num) + '_' + str(bix)
         # log images
+        predicted_normal = get_normal_in_range(predicted_normal)
         save_image(predicted_normal, path = file_name+'_normal.png')
         save_image(predicted_albedo, path = file_name+'_albedo.png')
         save_image(predicted_shading, path = file_name+'_shading.png')

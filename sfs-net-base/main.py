@@ -93,7 +93,7 @@ def main():
         skipnet_model = skipnet_model.cuda()
 
     if model_dir is not None:
-        skipnet_model.load_state_dict(torch.load(model_dir + 'skipnet_model.pkl'))
+        skipnet_model.load_state_dict(torch.load(model_dir + 'skip_net_model.pkl'))
     else:
         print('Initializing weights')
         skipnet_model.apply(weights_init)
@@ -143,11 +143,11 @@ def main():
     if use_cuda:
         sfsnet_model = sfsnet_model.cuda()
 
-    if model_dir is not None:
-        sfsnet_model.load_state_dict(torch.load(model_dir + 'sfsnet_model.pkl'))
-    else:
-        print('Initializing weights')
-        skipnet_model.apply(weights_init)
+    # if model_dir is not None:
+    #    sfsnet_model.load_state_dict(torch.load(model_dir + 'sfsnet_model.pkl'))
+    #else:
+    print('Initializing weights')
+    skipnet_model.apply(weights_init)
     train(sfsnet_model, syn_data, celeba_data=out_celeba_images_dir, read_first=read_first,\
             batch_size=batch_size, num_epochs=epochs, log_path=log_dir+'Mix_Training/', use_cuda=use_cuda, wandb=wandb, \
             lr=lr, wt_decay=wt_decay)
