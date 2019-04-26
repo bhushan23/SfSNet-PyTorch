@@ -232,7 +232,7 @@ def generate_celeba_synthesize(sfs_net_model, dl, train_epoch_num = 0,
         predicted_normal, predicted_albedo, predicted_sh, predicted_shading, predicted_face = sfs_net_model(face)
         
         # save predictions in log folder
-        file_name = out_folder + str(trasyn_val_dlin_epoch_num) + '_' + str(bix)
+        file_name = out_folder + str(train_epoch_num) + '_' + str(bix)
         # log images
         save_image(predicted_normal, path = file_name+'_normal.png')
         save_image(predicted_albedo, path = file_name+'_albedo.png')

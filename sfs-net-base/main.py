@@ -21,7 +21,7 @@ from train import *
 from models import *
 
 def main():
-    ON_SERVER = False
+    ON_SERVER = True
 
     parser = argparse.ArgumentParser(description='SfSNet - Residual')
     parser.add_argument('--batch_size', type=int, default=8, metavar='N',
@@ -105,7 +105,7 @@ def main():
     wandb.watch(skipnet_model)
 
     # 1. Train on Synthetic data
-    train(skipnet_model, syn_data, celeba_data = celeba_data, read_first=read_first, \
+    train_synthetic(skipnet_model, syn_data, celeba_data = celeba_data, read_first=read_first, \
             batch_size=batch_size, num_epochs=epochs, log_path=log_dir+'Synthetic_Train/', use_cuda=use_cuda, wandb=wandb, \
             lr=lr, wt_decay=wt_decay, training_syn=True)
     
