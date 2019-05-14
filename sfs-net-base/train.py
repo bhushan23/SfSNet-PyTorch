@@ -315,7 +315,7 @@ def train_synthetic(sfs_net_model, syn_data, celeba_data=None, read_first=None,
                         use_cuda = use_cuda, out_folder = out_syn_images_dir + 'celeba_val/', wandb = wandb, dump_all_images = True)
  
             # Model saving
-            torch.save(sfs_net_model.state_dict(), model_checkpoint_dir + 'sfs_net_model.pkl')
+            torch.save(sfs_net_model.state_dict(), model_checkpoint_dir + 'skipnet_model.pkl')
         if epoch % 5 == 0:
             t_total, t_normal, t_albedo, t_sh, t_recon = predict_sfsnet(sfs_net_model, syn_test_dl, train_epoch_num=epoch, use_cuda=use_cuda, 
                                                                         out_folder=out_syn_images_dir + '/test/', wandb=wandb, suffix='Test')
