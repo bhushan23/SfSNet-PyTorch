@@ -11,7 +11,7 @@ from skimage import io
 from PIL import Image
 import pandas as pd
 
-from utils import save_image, denorm
+from utils import save_image, denorm, get_normal_in_range
 import numpy as np
 IMAGE_SIZE = 128
 
