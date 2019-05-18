@@ -36,15 +36,26 @@ optional arguments:
   --no_cuda             disables CUDA training
   --seed S              random seed (default: 1)
   --read_first READ_FIRST
-                        read first n rows (default: -1)
+                        read first n rows (default: -1) from the dataset
+                        This is helpful to load part of the data. Note that, internally
+                        we change this to sample randomly with seed value 100
   --details DETAILS     Explaination of the run
+                        String provided will be written into root log directory
+                        We perform many experiments and then get lost on the results and what was this experiment for.
+                        This txt file will help us understand what was the purpose of this experiment
   --load_pretrained_model LOAD_PRETRAINED_MODEL
-                        Pretrained model path
-  --syn_data SYN_DATA   Synthetic Dataset path
+                        Pretrained model path for SfSNet based model provided by author
+  --syn_data SYN_DATA   Synthetic Dataset path directory high level containing csv files
   --celeba_data CELEBA_DATA
-                        CelebA Dataset path
+                        CelebA Dataset path high level containing train, test folder and csv files
   --log_dir LOG_DIR     Log Path
+                        Where to log and store results, model
   --load_model LOAD_MODEL
-                        load model from
+                        load model from following directory
 ```
 
+Example
+```
+CUDA_VISIBLE_DEVICES=0,1 python main.py --epochs 100 --lr 0.0002 --batch_size 8 --read_first 10000
+--log_dir ./results/skip_net/exp4/ --details 'Skipnet with normals'
+```
