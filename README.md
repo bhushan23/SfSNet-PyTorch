@@ -59,3 +59,17 @@ Example
 CUDA_VISIBLE_DEVICES=0,1 python main.py --epochs 100 --lr 0.0002 --batch_size 8 --read_first 10000
 --log_dir ./results/skip_net/exp4/ --details 'Skipnet with normals'
 ```
+
+## Cite
+
+If you find this repo useful, you can cite this in your research as follows
+
+```
+@misc{sfsnet_pytorch,
+  author = {Bhushan Sonawane},
+  title = {SfSNet implementation in PyTorch},
+  year = {2019},
+  publisher = {GitHub},
+  url = {https://github.com/bhushan23/SfSNet-PyTorch}
+}
+```
